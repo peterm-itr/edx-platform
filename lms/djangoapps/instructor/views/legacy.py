@@ -254,11 +254,6 @@ def instructor_dashboard(request, course_id):
         track.views.server_track(request, "dump-answer-dist-csv", {}, page="idashboard")
         return return_csv('answer_dist_{0}.csv'.format(course_key.to_deprecated_string()), get_answers_distribution(request, course_key))
 
-    elif 'Dump description of graded assignments configuration' in action:
-        # what is "graded assignments configuration"?
-        track.views.server_track(request, "dump-graded-assignments-config", {}, page="idashboard")
-        msg += dump_grading_context(course)
-
     #----------------------------------------
     # export grades to remote gradebook
 
