@@ -116,7 +116,7 @@ define([
              * should be prefixed with '?'
              */
             var setFakeQueryParams = function( params ) {
-                spyOn( $, 'url' ).andCallFake(function( requestedParam ) {
+                spyOn( view, 'url' ).andCallFake(function( requestedParam ) {
                     if ( params.hasOwnProperty(requestedParam) ) {
                         return params[requestedParam];
                     }

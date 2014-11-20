@@ -54,6 +54,7 @@
             'xblock/lms.runtime.v1': 'coffee/src/xblock/lms.runtime.v1',
             'capa/display': 'xmodule_js/src/capa/display',
             'string_utils': 'xmodule_js/common_static/js/src/string_utils',
+            'text': 'xmodule_js/common_static/js/vendor/text',
 
             // Manually specify LMS files that are not converted to RequireJS
             'js/verify_student/photocapture': 'js/verify_student/photocapture',
@@ -67,14 +68,6 @@
             'js/views/notification': 'js/views/notification',
             'js/models/notification': 'js/models/notification',
             'js/student_account/account': 'js/student_account/account',
-            'js/student_account/views/FormView': 'js/student_account/views/FormView',
-            'js/student_account/models/LoginModel': 'js/student_account/models/LoginModel',
-            'js/student_account/views/LoginView': 'js/student_account/views/LoginView',
-            'js/student_account/models/PasswordResetModel': 'js/student_account/models/PasswordResetModel',
-            'js/student_account/views/PasswordResetView': 'js/student_account/views/PasswordResetView',
-            'js/student_account/models/RegisterModel': 'js/student_account/models/RegisterModel',
-            'js/student_account/views/RegisterView': 'js/student_account/views/RegisterView',
-            'js/student_account/views/AccessView': 'js/student_account/views/AccessView',
             'js/student_profile/profile': 'js/student_profile/profile'
         },
         shim: {
@@ -145,7 +138,7 @@
             },
             'jquery.url': {
                 deps: ['jquery'],
-                exports: 'jQuery.fn.url'
+                exports: 'jQuery.url'
             },
             'datepair': {
                 deps: ['jquery.ui', 'jquery.timepicker']
@@ -288,83 +281,6 @@
             'js/views/notification': {
                 exports: 'NotificationView',
                 deps: ['backbone', 'jquery', 'underscore']
-            },
-            'js/student_account/enrollment': {
-                exports: 'edx.student.account.EnrollmentInterface',
-                deps: ['jquery', 'jquery.cookie']
-            },
-            'js/student_account/shoppingcart': {
-                exports: 'edx.student.account.ShoppingCartInterface',
-                deps: ['jquery', 'jquery.cookie', 'underscore']
-            },
-            // Student account registration/login
-            // Loaded explicitly until these are converted to RequireJS
-            'js/student_account/views/FormView': {
-                exports: 'edx.student.account.FormView',
-                deps: ['jquery', 'underscore', 'backbone', 'gettext']
-            },
-            'js/student_account/models/LoginModel': {
-                exports: 'edx.student.account.LoginModel',
-                deps: ['jquery', 'jquery.cookie', 'backbone']
-            },
-            'js/student_account/views/LoginView': {
-                exports: 'edx.student.account.LoginView',
-                deps: [
-                    'jquery',
-                    'jquery.url',
-                    'underscore',
-                    'gettext',
-                    'js/student_account/models/LoginModel',
-                    'js/student_account/views/FormView'
-                ]
-            },
-            'js/student_account/models/PasswordResetModel': {
-                exports: 'edx.student.account.PasswordResetModel',
-                deps: ['jquery', 'jquery.cookie', 'backbone']
-            },
-            'js/student_account/views/PasswordResetView': {
-                exports: 'edx.student.account.PasswordResetView',
-                deps: [
-                    'jquery',
-                    'underscore',
-                    'gettext',
-                    'js/student_account/models/PasswordResetModel',
-                    'js/student_account/views/FormView'
-                ]
-            },
-            'js/student_account/models/RegisterModel': {
-                exports: 'edx.student.account.RegisterModel',
-                deps: ['jquery', 'jquery.cookie', 'backbone']
-            },
-            'js/student_account/views/RegisterView': {
-                exports: 'edx.student.account.RegisterView',
-                deps: [
-                    'jquery',
-                    'jquery.url',
-                    'underscore',
-                    'gettext',
-                    'js/student_account/models/RegisterModel',
-                    'js/student_account/views/FormView'
-                ]
-            },
-            'js/student_account/views/AccessView': {
-                exports: 'edx.student.account.AccessView',
-                deps: [
-                    'jquery',
-                    'underscore',
-                    'backbone',
-                    'gettext',
-                    'utility',
-                    'js/student_account/views/LoginView',
-                    'js/student_account/views/PasswordResetView',
-                    'js/student_account/views/RegisterView',
-                    'js/student_account/models/LoginModel',
-                    'js/student_account/models/PasswordResetModel',
-                    'js/student_account/models/RegisterModel',
-                    'js/student_account/views/FormView',
-                    'js/student_account/enrollment',
-                    'js/student_account/shoppingcart',
-                ]
             }
         }
     });
@@ -384,6 +300,7 @@
         'lms/include/js/spec/student_account/password_reset_spec.js',
         'lms/include/js/spec/student_account/enrollment_spec.js',
         'lms/include/js/spec/student_account/shoppingcart_spec.js',
+        'lms/include/js/spec/student_account/validation_spec.js',
         'lms/include/js/spec/student_profile/profile_spec.js'
     ]);
 
