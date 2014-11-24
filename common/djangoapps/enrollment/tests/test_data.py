@@ -54,12 +54,11 @@ class EnrollmentDataTest(ModuleStoreTestCase):
     def test_enroll(self, course_modes, enrollment_mode):
         # Create the course modes (if any) required for this test case
         self._create_course_modes(course_modes)
-
-        enrollment = data.update_course_enrollment(
+        enrollment = data.create_course_enrollment(
             self.user.username,
             unicode(self.course.id),
-            mode=enrollment_mode,
-            is_active=True
+            enrollment_mode,
+            True
         )
 
         self.assertTrue(CourseEnrollment.is_enrolled(self.user, self.course.id))
@@ -119,9 +118,11 @@ class EnrollmentDataTest(ModuleStoreTestCase):
         for course in created_courses:
             self._create_course_modes(course_modes, course=course)
             # Create the original enrollment.
-            created_enrollments.append(data.update_course_enrollment(
+            created_enrollments.append(data.create_course_enrollment(
                 self.user.username,
                 unicode(course.id),
+                'honor',
+                True
             ))
 
         # Compare the created enrollments with the results
@@ -148,11 +149,11 @@ class EnrollmentDataTest(ModuleStoreTestCase):
         self.assertIsNone(result)
 
         # Create the original enrollment.
-        enrollment = data.update_course_enrollment(
+        enrollment = data.create_course_enrollment(
             self.user.username,
             unicode(self.course.id),
-            mode=enrollment_mode,
-            is_active=True
+            enrollment_mode,
+            True
         )
         # Get the enrollment and compare it to the original.
         result = data.get_course_enrollment(self.user.username, unicode(self.course.id))

@@ -191,7 +191,7 @@ def add_enrollment(student_id, course_id, mode='honor', is_active=True):
         }
     """
     _validate_course_mode(course_id, mode)
-    return _data_api().update_course_enrollment(student_id, course_id, mode=mode, is_active=is_active)
+    return _data_api().create_course_enrollment(student_id, course_id, mode, is_active)
 
 
 def update_enrollment(student_id, course_id, mode=None, is_active=None):
@@ -235,7 +235,12 @@ def update_enrollment(student_id, course_id, mode=None, is_active=None):
 
     """
     _validate_course_mode(course_id, mode)
-    return _data_api().update_course_enrollment(student_id, course_id, mode=mode, is_active=is_active)
+    enrollment = _data_api().update_course_enrollment(student_id, course_id, mode=mode, is_active=is_active)
+    if enrollment is None:
+        raise EnrollmentNotFoundError(
+            u"Course Enrollment not found for user {user} in course {course}".format(user=student_id, course=course_id)
+        )
+    return enrollment
 
 
 def get_course_enrollment_details(course_id):

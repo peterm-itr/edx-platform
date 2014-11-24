@@ -92,8 +92,11 @@ def update_course_enrollment(student_id, course_id, mode=None, is_active=None):
     """
     course_key = CourseKey.from_string(course_id)
     student = User.objects.get(username=student_id)
-    enrollment = CourseEnrollment.objects.get(user=student, course_id=course_key)
-    return _update_enrollment(enrollment, is_active=is_active, mode=mode)
+    try:
+        enrollment = CourseEnrollment.objects.get(user=student, course_id=course_key)
+        return _update_enrollment(enrollment, is_active=is_active, mode=mode)
+    except CourseEnrollment.DoesNotExist:
+        return None
 
 
 def _update_enrollment(enrollment, is_active=None, mode=None):

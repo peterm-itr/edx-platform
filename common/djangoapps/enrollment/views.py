@@ -105,59 +105,11 @@ class EnrollmentView(APIView):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
         try:
-            kwargs = self._get_parameters(request)
-            return Response(api.add_enrollment(student, course_id, **kwargs))
+            return Response(api.add_enrollment(student, course_id))
         except api.CourseModeNotFoundError as error:
             return Response(status=status.HTTP_400_BAD_REQUEST, data=error.data)
         except (NonExistentCourseError, api.EnrollmentNotFoundError, CourseEnrollmentException):
             return Response(status=status.HTTP_400_BAD_REQUEST)
-
-    def put(self, request, course_id=None, student=None):
-        """Update the course enrollment.
-
-        HTTP Endpoint for all creation and modifications to an existing enrollment.
-
-        Args:
-            request (Request): A PUT request create or modify an existing enrollment. If 'mode' or 'deactivate'
-                are found in the request parameters, the mode can be modified, or the enrollment can be
-                deactivated.
-            course_id (str): URI element specifying the course location. Enrollment information will be
-                returned, created, or updated for this particular course.
-            student (str): The Student's username associated with the enrollment.
-
-        Return:
-            A JSON serialized representation of the course enrollment, including all modifications.
-        """
-        if student != request.user.username:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        try:
-            kwargs = self._get_parameters(request)
-            return Response(api.update_enrollment(student, course_id, **kwargs))
-        except api.CourseModeNotFoundError as error:
-            return Response(status=status.HTTP_400_BAD_REQUEST, data=error.data)
-        except (NonExistentCourseError, api.EnrollmentNotFoundError, CourseEnrollmentException):
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
-    def _get_parameters(self, request):
-        """Simple function to get parameters from the request for use with the API.
-
-        Check the request DATA for any expected arguments related to course enrollment, and
-        construct a dictionary of known attributes that may be modified.
-
-        Args:
-            request (Request): The request to the API.
-
-        Return:
-            A dictionary of values that may be modified on a course enrollment.
-
-        """
-        kwargs = {}
-        if 'mode' in request.DATA:
-            kwargs['mode'] = request.DATA['mode']
-        if 'is_active' in request.DATA:
-            kwargs['is_active'] = request.DATA['is_active']
-        return kwargs
 
 
 class EnrollmentListView(APIView):
