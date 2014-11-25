@@ -1,8 +1,7 @@
 var require = {
-    /* The baseURL is overridden when using RequireJS optimizer,
-    * but is necessary for local development.
+    /* The baseURL is overridden by RequireJS optimizer
+    * and in the main Mako template that loads the config.
     */
-    baseUrl: "/static/",
     waitSeconds: 60,
     paths: {
         'backbone':             'js/vendor/backbone-min',
