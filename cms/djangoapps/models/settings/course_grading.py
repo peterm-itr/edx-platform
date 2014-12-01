@@ -211,5 +211,5 @@ class CourseGradingModel(object):
             "min_count": grader.get('min_count', 0),
             "drop_count": grader.get('drop_count', 0),
             "short_label": grader.get('short_label', ""),
-            "weight": grader.get('weight', 0) * 100,
+            "weight": round(grader.get('weight', 0) * 100, 2),
         }
