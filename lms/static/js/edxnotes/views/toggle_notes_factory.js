@@ -1,14 +1,13 @@
 ;(function (define, undefined) {
     'use strict';
-    define(['jquery', 'underscore', 'js/edxnotes/views/notes'], function($, _, Notes) {
+    define(['jquery', 'underscore', 'js/edxnotes/views/edxnotes_wrapper_factory'], function($, _, EdxnotesWrapperFactory) {
         return function (visibility, visibilityUrl) {
-            var checkbox = $('a.action-toggle-notes'),
-                checkboxIcon = checkbox.children('i');
+            var checkbox = $('p.action-inline > a.action-toggle-notes'),
+                checkboxIcon = checkbox.children('i.checkbox-icon');
 
             checkbox.on('click', function(event) {
                 visibility = !visibility;
-                Notes.visibility = visibility;
-                toggleCheckbox();
+                toggleAnnotator();
 
                 $.ajax({
                     type: 'PUT',
@@ -16,41 +15,24 @@
                     contentType: 'application/json',
                     dataType: 'json',
                     data: JSON.stringify({'visibility': visibility}),
-                    success: function(response) {
-                        console.log('PUT Success.');
-                        toggleAnnotator();
-                    },
-                    error: function(response) {console.log('PUT Error.');}
+                    error: function(response) {
+                        console.log(JSON.parse(response.responseText));
+                    }
                 });
                 event.preventDefault();
             });
 
             function toggleCheckbox() {
-                checkboxIcon.removeClass('icon-check icon-check-empty');
-                checkboxIcon.addClass(visibility ? 'icon-check' : 'icon-check-empty');
+                checkboxIcon.toggleClass('icon-check', visibility)
+                            .toggleClass('icon-check-empty', !visibility);
             }
 
             function toggleAnnotator() {
+                toggleCheckbox();
                 if (visibility) {
-                    createAnnotator();
+                    _.each($('.edx-notes-wrapper'),  EdxnotesWrapperFactory.createAnnotator);
                 } else {
-                    destroyAllInstances();
-                }
-            }
-
-            function createAnnotator() {
-                $('.edx-notes-wrapper').each(function(){
-                    Notes.factory(this);
-                });
-            }
-
-            function destroyAllInstances() {
-                var len;
-                if (Annotator) {
-                    len = Annotator._instances.length;
-                    while (len--) {
-                        Annotator._instances[len].destroy();
-                    }
+                    EdxnotesWrapperFactory.destroyAllInstances();
                 }
             }
         };
