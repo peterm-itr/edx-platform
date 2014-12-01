@@ -337,6 +337,7 @@ class EdxNotesViewsTest(TestCase):
         self.user = UserFactory.create(username="Bob", email="bob@example.com", password="edx")
         self.client.login(username=self.user.username, password="edx")
         self.notes_page_url = reverse("edxnotes", args=[unicode(self.course.id)])
+        self.edxnotes_visibility_url = reverse("edxnotes_visibility", args=[unicode(self.course.id)])
 
     # pylint: disable=unused-argument
     @patch.dict("django.conf.settings.FEATURES", {"ENABLE_EDXNOTES": True})
@@ -349,7 +350,6 @@ class EdxNotesViewsTest(TestCase):
         response = self.client.get(self.notes_page_url)
         self.assertContains(response, "<h1>Notes</h1>")
 
-    # pylint: disable=unused-argument
     @patch.dict("django.conf.settings.FEATURES", {"ENABLE_EDXNOTES": False})
     def test_edxnotes_view_is_disabled(self):
         """
@@ -357,3 +357,51 @@ class EdxNotesViewsTest(TestCase):
         """
         response = self.client.get(self.notes_page_url)
         self.assertEqual(response.status_code, 404)
+
+    @patch.dict("django.conf.settings.FEATURES", {"ENABLE_EDXNOTES": True})
+    def test_edxnotes_visibility(self):
+        """
+        Tests course value is updated if everything goes well.
+        """
+        enable_edxnotes_for_the_course(self.course, self.user.id)
+        response = self.client.post(
+            self.edxnotes_visibility_url,
+            data=json.dumps({"visibility": False}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(self.course.edxnotes_visibility)
+
+    @patch.dict("django.conf.settings.FEATURES", {"ENABLE_EDXNOTES": False})
+    def test_edxnotes_visibility_if_feature_is_disabled(self):
+        """
+        Tests that 404 response is received if EdxNotes feature is disabled.
+        """
+        response = self.client.post(self.edxnotes_visibility_url)
+        self.assertEqual(response.status_code, 404)
+
+    @patch.dict("django.conf.settings.FEATURES", {"ENABLE_EDXNOTES": True})
+    def test_edxnotes_visibility_invalid_json(self):
+        """
+        Tests that 400 response is received if invalid JSON is sent.
+        """
+        enable_edxnotes_for_the_course(self.course, self.user.id)
+        response = self.client.post(
+            self.edxnotes_visibility_url,
+            data="string",
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    @patch.dict("django.conf.settings.FEATURES", {"ENABLE_EDXNOTES": True})
+    def test_edxnotes_visibility_invalid_value(self):
+        """
+        Tests that 400 response is received if invalid value is sent.
+        """
+        enable_edxnotes_for_the_course(self.course, self.user.id)
+        response = self.client.post(
+            self.edxnotes_visibility_url,
+            data=json.dumps({"visibility": "string"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)

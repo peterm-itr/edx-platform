@@ -16,9 +16,9 @@ from xmodule.modulestore.django import modulestore
 from xmodule.modulestore.exceptions import ItemNotFoundError
 from util.date_utils import get_default_time_display
 from dateutil.parser import parse as dateutil_parse
-log = logging.getLogger(__name__)
 from provider.oauth2.models import AccessToken, Client
 from provider.utils import now
+log = logging.getLogger(__name__)
 
 
 class NoteJSONEncoder(JSONEncoder):

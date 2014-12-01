@@ -2,6 +2,7 @@
 Views related to EdxNotes.
 """
 import json
+import logging
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.conf import settings
@@ -16,6 +17,7 @@ from edxnotes.helpers import (
 )
 from xmodule.modulestore.django import modulestore
 from util.json_request import JsonResponse, JsonResponseBadRequest
+log = logging.getLogger(__name__)
 
 
 @login_required
@@ -41,12 +43,17 @@ def edxnotes(request, course_id):
 
     return render_to_response("edxnotes.html", context)
 
+
 def edxnotes_visibility(request, course_id):
     '''
     Handle ajax call from "Show notes" checkbox
     '''
     course_key = SlashSeparatedCourseKey.from_deprecated_string(course_id)
     course = get_course_with_access(request.user, "load", course_key)
+
+    if not is_feature_enabled(course):
+        raise Http404
+
     try:
         edxnotes_visibility = json.loads(request.body)["visibility"]
         if isinstance(edxnotes_visibility, bool):
@@ -56,6 +63,7 @@ def edxnotes_visibility(request, course_id):
         else:
             raise ValueError()
     except ValueError:
-        self.log_error(
-            "Could not decode request body as JSON and find a boolean visibility field: '{0}'".format(request.body))
+        log.warning(
+            "Could not decode request body as JSON and find a boolean visibility field: '{0}'".format(request.body)
+        )
         return JsonResponseBadRequest()
