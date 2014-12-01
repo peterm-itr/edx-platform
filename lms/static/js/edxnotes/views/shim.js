@@ -20,6 +20,15 @@
             };
         }
 
+        /**
+         * The original _setupDynamicStyle uses a very expensive call to
+         * Util.maxZIndex(...) that sets the z-index of .annotator-adder,
+         * .annotator-outer, .annotator-notice, .annotator-filter. We set these
+         * values in annotator.min.css instead and do nothing here.
+         */
+        Annotator.prototype._setupDynamicStyle = function() {
+        }
+
         Annotator.frozenSrc = null;
 
         /**
