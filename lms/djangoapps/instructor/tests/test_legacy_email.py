@@ -109,7 +109,7 @@ class TestInstructorDashboardEmailView(ModuleStoreTestCase):
             response = self.client.get(self.url)
             self.assertFalse(self.email_link in response.content)
 
-    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': True})
+    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': True, 'REQUIRE_COURSE_EMAIL_AUTH': True})
     def test_send_mail_unauthorized(self):
         """ Test 'Send email' action returns an error if course is not authorized to send email. """
 
