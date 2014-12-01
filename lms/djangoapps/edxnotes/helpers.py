@@ -17,6 +17,7 @@ from xmodule.modulestore.exceptions import ItemNotFoundError
 from util.date_utils import get_default_time_display
 from dateutil.parser import parse as dateutil_parse
 from provider.oauth2.models import AccessToken, Client
+import oauth2_provider.oidc as oidc
 from provider.utils import now
 from .exceptions import EdxNotesParseError
 log = logging.getLogger(__name__)
@@ -33,20 +34,23 @@ class NoteJSONEncoder(JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def get_token(user):
+def get_id_token(user):
     """
-    Generates OAuth access token for a user.
+    Generates JWT ID-Token, using or creating user's OAuth access token.
     """
     try:
-        token = AccessToken.objects.get(
+        access_token = AccessToken.objects.get(
             client=Client.objects.get(name="edx-notes"),
             user=user,
             expires__gt=now()
         )
     except AccessToken.DoesNotExist:
-        token = AccessToken(client=Client.objects.get(name="edx-notes"), user=user)
-        token.save()
-    return token.token
+        access_token = AccessToken(client=Client.objects.get(name="edx-notes"), user=user)
+        access_token.save()
+
+    id_token = oidc.id_token(access_token)
+    secret = id_token.access_token.client.client_secret
+    return id_token.encode(secret)
 
 
 def send_request(user, course_id, path="", query_string=""):
@@ -67,7 +71,7 @@ def send_request(user, course_id, path="", query_string=""):
     response = requests.get(
         url,
         headers={
-            "x-annotator-auth-token": get_token(user)
+            "x-annotator-auth-token": get_id_token(user)
         },
         params=params
     )

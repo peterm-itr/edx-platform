@@ -8,4 +8,5 @@ urlpatterns = patterns(
     'edxnotes.views',
     url(r'^/$', 'edxnotes', name='edxnotes'),
     url(r'^/search/$', "search_notes", name="search_notes"),
+    url(r'^/token/$', 'get_token'),
 )

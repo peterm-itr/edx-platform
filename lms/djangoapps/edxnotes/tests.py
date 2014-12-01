@@ -431,13 +431,13 @@ class EdxNotesHelpersTest(TestCase):
         )
 
     @patch.dict("django.conf.settings.EDXNOTES_INTERFACE", {"url": "http://example.com"})
-    @patch("edxnotes.helpers.get_token")
+    @patch("edxnotes.helpers.get_id_token")
     @patch("edxnotes.helpers.requests.get")
-    def test_send_request_with_query_string(self, mock_get, get_token):
+    def test_send_request_with_query_string(self, mock_get, get_id_token):
         """
         Tests that requests are send with correct information.
         """
-        get_token.return_value = "test_token"
+        get_id_token.return_value = "test_token"
         helpers.send_request(
             self.user, self.course.id, path="test", query_string="text"
         )
@@ -454,13 +454,13 @@ class EdxNotesHelpersTest(TestCase):
         )
 
     @patch.dict("django.conf.settings.EDXNOTES_INTERFACE", {"url": "http://example.com"})
-    @patch("edxnotes.helpers.get_token")
+    @patch("edxnotes.helpers.get_id_token")
     @patch("edxnotes.helpers.requests.get")
-    def test_send_request_without_query_string(self, mock_get, get_token):
+    def test_send_request_without_query_string(self, mock_get, get_id_token):
         """
         Tests that requests are send with correct information.
         """
-        get_token.return_value = "test_token"
+        get_id_token.return_value = "test_token"
         helpers.send_request(
             self.user, self.course.id, path="test"
         )
