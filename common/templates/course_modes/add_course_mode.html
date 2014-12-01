@@ -28,11 +28,11 @@ ${_("Add Course Mode")}
     <div class="wrapper-add-course-mode wrapper-content-main">
       <article class="add-course-mode content-main">
         <h3 class="title">${_("Now choose your course track:")}</h3>
-        <form class="form-add-course-mode" method="post" action="${reverse('course_modes.views.add_honor_mode_to_course')}" name="add_course_mode_form" id="add_course_mode_form">
+        <form class="form-add-course-mode" method="post" action="" name="add_course_mode_form" id="add_course_mode_form">
           <div class="add-course-mode">
             <div>
               <label>Course Id</label>
-              <input type="text" value="" name="course_id">
+              <input type="text" value="${course_id}" name="course_id" readonly>
             </div>
             <div>
             <label>Course Mode</label>

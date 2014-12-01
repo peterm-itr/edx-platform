@@ -201,14 +201,13 @@ class ChooseModeView(View):
 @ensure_csrf_cookie
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
 @require_level('staff')
-def add_honor_mode_to_course(request):
+def add_honor_mode_to_course(request, course_id):
     """
     Create the honor mode for the course_id
     """
     if request.method == 'GET':
-        return render_to_response("course_modes/add_course_mode.html", {'error': False})
+        return render_to_response("course_modes/add_course_mode.html", {'error': False, 'course_id': course_id})
     if request.method == 'POST':
-        course_id = request.POST.get('course_id')
         course_mode = request.POST.get('course_mode')
         course_mode_display_name = request.POST.get('course_mode_display_name')
         try:
