@@ -135,6 +135,13 @@ class EdxNotesUnitPage(CoursePage):
         self.q(css=selector).first.click()
         return self
 
+    def toggle_visibility(self):
+        """
+        Clicks on the "Show notes" checkbox.
+        """
+        self.q(css=".action-toggle-notes").first.click()
+        return self
+
     @property
     def components(self):
         """
