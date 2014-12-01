@@ -247,7 +247,6 @@ class AddHonorModeToCourseTest(UrlResetMixin, ModuleStoreTestCase):
     Unittests for course_modes.views.add_honor_mode_to_course
     """
 
-    @patch.dict('django.conf.settings.FEATURES', {'CONVERT_TO_PAID_COURSE_REGISTRATION_MODE_FOR_TESTING': True})
     def setUp(self):
         super(AddHonorModeToCourseTest, self).setUp()
         self.course = CourseFactory.create()
