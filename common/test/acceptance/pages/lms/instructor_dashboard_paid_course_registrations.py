@@ -178,7 +178,9 @@ class ECommercePageCouponsListSection(PageObject):
         self.q(css="#add_coupon_button").click()
 
         # wait for data row to appear
-        self.wait_for_element_presence('table.coupons-table tbody tr:nth-child(1)', "coupon row in table.")
+        # self.wait_for_element_presence('table.coupons-table tbody tr:nth-child(1)', "coupon row in table.")
+
+        import time; time.sleep(30) # testing only.
 
     def compare_row_data(self, coupon_code, discount, description, was_expired=False, expiration_date=None):
         """
