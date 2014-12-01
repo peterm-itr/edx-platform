@@ -197,10 +197,6 @@ class ChooseModeView(View):
             return None
 
 
-
-@ensure_csrf_cookie
-@cache_control(no_cache=True, no_store=True, must_revalidate=True)
-@require_level('staff')
 def add_honor_mode_to_course(request, course_id):
     """
     Create the honor mode for the course_id
@@ -215,15 +211,13 @@ def add_honor_mode_to_course(request, course_id):
         except ValueError:
             return HttpResponseBadRequest('Enter the integer value for the price')
         course_mode_currency = request.POST.get('course_mode_currency')
-        if course_id:
-            course_key = SlashSeparatedCourseKey.from_deprecated_string(course_id)
-            CourseMode.create_course_mode(
-                course_id=course_key,
-                min_price=course_mode_price,
-                mode_slug=course_mode,
-                mode_display_name=course_mode_display_name,
-                currency=course_mode_currency
-            )
-            return HttpResponse('success')
-        else:
-            return HttpResponseBadRequest('course_id is None')
+
+        course_key = SlashSeparatedCourseKey.from_deprecated_string(course_id)
+        CourseMode.create_course_mode(
+            course_id=course_key,
+            min_price=course_mode_price,
+            mode_slug=course_mode,
+            mode_display_name=course_mode_display_name,
+            currency=course_mode_currency
+        )
+        return HttpResponse('success')

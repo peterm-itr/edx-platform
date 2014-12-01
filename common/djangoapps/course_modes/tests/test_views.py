@@ -252,22 +252,34 @@ class AddHonorModeToCourseTest(UrlResetMixin, ModuleStoreTestCase):
         self.course = CourseFactory.create()
         self.user = UserFactory.create(username="Bob", email="bob@example.com", password="edx")
         self.client.login(username=self.user.username, password="edx")
-        self.url = '/course_modes/add_honor_mode_to_course/'
+        self.url = reverse('add_honor_mode_to_course', kwargs={'course_id': self.course.id.to_deprecated_string()})
 
     def test_add_honor_mode_to_course(self):
         """
         test to add the honor mode for the course id
         """
-
-        response = self.client.get(self.url, {'course_id': self.course.id})
+        print self.url
+        data = {
+            'course_mode': 'honor',
+            'course_mode_display_name': 'Honor Display',
+            'course_mode_price': '12',
+            'course_mode_currency': 'usd'
+        }
+        response = self.client.post(self.url, data)
         self.assertEqual(200, response.status_code)
         self.assertEqual('success', response.content)
 
     def test_fail_add_honor_mode_to_course(self):
         """
         test that fails to create the course mode honor
-        when not giving the course_id in the query parameters
+        when not giving the proper course mode price
         """
-        response = self.client.get(self.url, {'course_id': ''})
+        data = {
+            'course_mode': 'honor',
+            'course_mode_display_name': 'Honor Display',
+            'course_mode_price': '4wqe',
+            'course_mode_currency': 'usd'
+        }
+        response = self.client.post(self.url, data)
         self.assertEqual(400, response.status_code)
-        self.assertEqual('course_id is None', response.content)
+        self.assertEqual('Enter the integer value for the price', response.content)
