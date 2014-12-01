@@ -175,12 +175,11 @@ class ECommercePageCouponsListSection(PageObject):
             self.click_coupon_expiration_checkbox()
             self.q(css="#coupon_expiration_date").results[0].send_keys(expiration_date)
 
+        self.q(css="#coupon_discount").click()  # clicking somewhere else to hide the calendar.
         self.q(css="#add_coupon_button").click()
 
         # wait for data row to appear
-        # self.wait_for_element_presence('table.coupons-table tbody tr:nth-child(1)', "coupon row in table.")
-
-        import time; time.sleep(30) # testing only.
+        self.wait_for_element_presence('table.coupons-table tbody tr:nth-child(1)', "coupon row in table.")
 
     def compare_row_data(self, coupon_code, discount, description, was_expired=False, expiration_date=None):
         """
