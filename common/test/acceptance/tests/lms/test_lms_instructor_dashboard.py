@@ -153,8 +153,8 @@ class ECommerceCouponsListTest(UniqueCourseTest):
         Then a new coupon with an expiry date is successfully added.
         """
         self.coupons_list_section.click_to_show_add_coupon_popup()
-        self.coupons_list_section.set_data_on_add_coupon_popup_and_submit(coupon_code="ABC123", discount="10", description="test", expiration_date="11/27/2999")
-        self.assertTrue(self.coupons_list_section.compare_row_data(coupon_code="ABC123", discount="10", description="test", expiration_date="November 27, 2999", was_expired=False))
+        self.coupons_list_section.set_data_on_add_coupon_popup_and_submit(coupon_code="ABC1234", discount="10", description="test", expiration_date="11/27/2999")
+        self.assertTrue(self.coupons_list_section.compare_row_data(coupon_code="ABC1234", discount="10", description="test", expiration_date="November 27, 2999", was_expired=False))
 
     def test_expired_coupons_show_up_in_yellow(self):
         """
@@ -167,5 +167,5 @@ class ECommerceCouponsListTest(UniqueCourseTest):
         And it is shown in yellow background.
         """
         self.coupons_list_section.click_to_show_add_coupon_popup()
-        self.coupons_list_section.set_data_on_add_coupon_popup_and_submit(coupon_code="ABC123", discount="10", description="test", expiration_date="11/27/2000")
-        self.assertTrue(self.coupons_list_section.compare_row_data(coupon_code="ABC123", discount="10", description="test", expiration_date="November 27, 2000", was_expired=True))
+        self.coupons_list_section.set_data_on_add_coupon_popup_and_submit(coupon_code="ABC12345", discount="10", description="test", expiration_date="11/27/2000")
+        self.assertTrue(self.coupons_list_section.compare_row_data(coupon_code="ABC12345", discount="10", description="test", expiration_date="November 27, 2000", was_expired=True))
