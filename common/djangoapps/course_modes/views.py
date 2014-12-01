@@ -199,10 +199,26 @@ def add_honor_mode_to_course(request):
     """
     Create the honor mode for the course_id
     """
-    course_id = request.GET.get('course_id')
-    if course_id:
-        course_key = SlashSeparatedCourseKey.from_deprecated_string(course_id)
-        CourseMode.create_course_mode(course_id=course_key, min_price=20, mode_slug='honor', currency='usd')
-        return HttpResponse('success')
-    else:
-        return HttpResponseBadRequest('course_id is None')
+    if request.method == 'GET':
+        return render_to_response("course_modes/add_course_mode.html", {'error': False})
+    if request.method == 'POST':
+        course_id = request.POST.get('course_id')
+        course_mode = request.POST.get('course_mode')
+        course_mode_display_name = request.POST.get('course_mode_display_name')
+        try:
+            course_mode_price = int(request.POST.get('course_mode_price'))
+        except ValueError:
+            return HttpResponseBadRequest('Enter the integer value for the price')
+        course_mode_currency = request.POST.get('course_mode_currency')
+        if course_id:
+            course_key = SlashSeparatedCourseKey.from_deprecated_string(course_id)
+            CourseMode.create_course_mode(
+                course_id=course_key,
+                min_price=course_mode_price,
+                mode_slug=course_mode,
+                mode_display_name=course_mode_display_name,
+                currency=course_mode_currency
+            )
+            return HttpResponse('success')
+        else:
+            return HttpResponseBadRequest('course_id is None')

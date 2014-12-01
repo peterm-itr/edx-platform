@@ -1,0 +1,61 @@
+<%! from django.utils.translation import ugettext as _ %>
+<%! from django.core.urlresolvers import reverse %>
+
+<%inherit file="../main.html" />
+
+<%block name="bodyclass">add course mode page</%block>
+<%block name="pagetitle">
+${_("Add Course Mode")}
+</%block>
+
+<%block name="content">
+% if error:
+<div class="wrapper-msg wrapper-msg-error">
+  <div class=" msg msg-error">
+    <i class="msg-icon icon-warning-sign"></i>
+    <div class="msg-content">
+      <h3 class="title">${_("Sorry, there was an error when trying to enroll you")}</h3>
+      <div class="copy">
+        <p>${error}</p>
+      </div>
+    </div>
+  </div>
+</div>
+%endif
+
+<div class="container">
+  <section class="wrapper">
+    <div class="wrapper-add-course-mode wrapper-content-main">
+      <article class="add-course-mode content-main">
+        <h3 class="title">${_("Now choose your course track:")}</h3>
+        <form class="form-add-course-mode" method="post" action="${reverse('course_modes.views.add_honor_mode_to_course')}" name="add_course_mode_form" id="add_course_mode_form">
+          <div class="add-course-mode">
+            <div>
+              <label>Course Id</label>
+              <input type="text" value="" name="course_id">
+            </div>
+            <div>
+            <label>Course Mode</label>
+            <input type="text" value="" name="course_mode">
+            </div>
+            <div>
+              <label>Course Mode Display Name</label>
+              <input type="text" value="" name="course_mode_display_name">
+            </div>
+            <div>
+              <label>Course Mode Price</label>
+              <input type="text" value="" name="course_mode_price">
+            </div>
+            <div>
+              <label>Currency</label>
+              <input type="text" value="" name="course_mode_currency">
+            </div>
+          </div>
+          <input type="submit" name="verified_mode" value="${_('Add Course Mode')}" />
+          <input type="hidden" name="csrfmiddlewaretoken" value="${ csrf_token }">
+        </form>
+      </article>
+    </div> <!-- /wrapper-content-main -->
+  </section>
+</div>
+</%block>
