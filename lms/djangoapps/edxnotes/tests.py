@@ -413,16 +413,3 @@ class EdxNotesViewsTest(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
-
-    @patch.dict("django.conf.settings.FEATURES", {"ENABLE_EDXNOTES": True})
-    def test_edxnotes_visibility_invalid_value(self):
-        """
-        Tests that 400 response is received if invalid value is sent.
-        """
-        enable_edxnotes_for_the_course(self.course, self.user.id)
-        response = self.client.post(
-            self.edxnotes_visibility_url,
-            data=json.dumps({"visibility": "string"}),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, 400)
