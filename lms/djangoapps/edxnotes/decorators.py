@@ -1,6 +1,7 @@
 """
 Decorators related to edXNotes.
 """
+from django.conf import settings
 from edxnotes.helpers import (
     get_endpoint,
     get_id_token,
@@ -8,7 +9,7 @@ from edxnotes.helpers import (
     is_feature_enabled,
 )
 from edxmako.shortcuts import render_to_string
-from django.conf import settings
+from student.models import anonymous_id_for_user
 
 
 def edxnotes(cls):

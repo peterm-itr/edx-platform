@@ -12,6 +12,8 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext as _
+
+from student.models import anonymous_id_for_user
 from xmodule.modulestore.django import modulestore
 from xmodule.modulestore.exceptions import ItemNotFoundError
 from util.date_utils import get_default_time_display
@@ -59,7 +61,7 @@ def send_request(user, course_id, path="", query_string=""):
     """
     url = get_endpoint(path)
     params = {
-        "user": user.username,
+        "user": anonymous_id_for_user(user, None),
         "course_id": unicode(course_id).encode("utf-8"),
     }
 

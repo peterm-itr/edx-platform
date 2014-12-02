@@ -894,6 +894,7 @@ MOCK_STAFF_GRADING = False
 EDXNOTES_INTERFACE = {
     'url': 'http://localhost:8042/api/v1',
 }
+OAUTH_ID_TOKEN_EXPIRATION = 60*60*24
 
 ################################# Jasmine ##################################
 JASMINE_TEST_DIRECTORY = PROJECT_ROOT + '/static/coffee'
