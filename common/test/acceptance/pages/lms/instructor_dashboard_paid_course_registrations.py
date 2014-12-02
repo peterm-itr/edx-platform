@@ -55,8 +55,9 @@ class ECommercePage(PageObject):
         """
         returns the ECommercePageCouponsListSection
         """
-        self.q(css=self.coupons_list_accordion_selector).click()
         ecommerce_page_coupons_list = ECommercePageCouponsListSection(self.browser)
+        if not ecommerce_page_coupons_list.is_browser_on_page():
+            self.q(css=self.coupons_list_accordion_selector).click()
         ecommerce_page_coupons_list.wait_for_page()
         return ecommerce_page_coupons_list
 
