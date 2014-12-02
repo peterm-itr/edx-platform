@@ -404,7 +404,7 @@
         'lms/include/js/spec/student_account/emailoptin_spec.js',
         'lms/include/js/spec/student_account/shoppingcart_spec.js',
         'lms/include/js/spec/student_profile/profile_spec.js',
-        'lms/include/js/spec/edxnotes/notes_spec.js',
+        'lms/include/js/spec/edxnotes/notes_factory_spec.js',
         'lms/include/js/spec/edxnotes/shim_spec.js',
         'lms/include/js/spec/edxnotes/utils/logger_spec.js',
         'lms/include/js/spec/edxnotes/views/notes_page_spec.js',

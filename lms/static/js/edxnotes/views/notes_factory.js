@@ -80,16 +80,11 @@ define([
             logger = Logger.getLogger(element.id, params.debug),
             annotator;
 
-        logger.time('Initialization Time');
+        updateHeaders(el, params.token);
         annotator = el.annotator(options).data('annotator');
         setupPlugins(annotator, plugins, options);
-        logger.timeEnd('Initialization Time');
-        updateHeaders(el, params.token);
         annotator.logger = logger;
-        logger.log({
-            'element': element,
-            'options': options,
-        });
+        logger.log({'element': element, 'options': options});
         return annotator;
     };
 
