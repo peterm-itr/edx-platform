@@ -103,8 +103,7 @@ def preprocess_collection(user, course, collection):
             })
             filtered_collection.append(model)
 
-    sorted_collection = sorted(filtered_collection, key=lambda note: note["updated"], reverse=True)
-    return sorted_collection
+    return filtered_collection
 
 
 def search(user, course, query_string):
@@ -138,7 +137,6 @@ def get_notes(user, course):
     except ValueError:
         return None
 
-    # if collection is empty, just return it.
     if not collection:
         return None
 

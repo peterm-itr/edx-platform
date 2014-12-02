@@ -250,7 +250,9 @@ class StubEdxNotesService(StubHttpService):
         """
         Returns a list of all notes.
         """
-        return deepcopy(self.notes)
+        notes = deepcopy(self.notes)
+        notes.reverse()
+        return notes
 
     def add_notes(self, notes):
         """

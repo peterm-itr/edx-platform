@@ -119,7 +119,7 @@ class EdxNotesDefaultInteractionsTest(EdxNotesTestMixin):
     def assert_text_in_notes(self, notes):
         actual = [note.text for note in notes]
         expected = ["TEST TEXT {}".format(i) for i in xrange(len(notes))]
-        self.assertEqual(set(expected), set(actual))
+        self.assertEqual(expected, actual)
 
     def test_can_create_notes(self):
         """
@@ -282,6 +282,14 @@ class EdxNotesPageTest(UniqueCourseTest):
         xblocks = self.course_fixture.get_nested_xblocks(category="html")
         self._add_notes([
             Note(
+                usage_id=xblocks[1].locator,
+                user=self.username,
+                course_id=self.course_fixture._course_key,
+                text="Third text",
+                quote="",
+                updated=datetime(2012, 1, 1, 1, 1, 1, 1).isoformat(),
+            ),
+            Note(
                 usage_id=xblocks[0].locator,
                 user=self.username,
                 course_id=self.course_fixture._course_key,
@@ -298,14 +306,6 @@ class EdxNotesPageTest(UniqueCourseTest):
                 quote="First note",
                 updated=datetime(2014, 1, 1, 1, 1, 1, 1).isoformat(),
             ),
-            Note(
-                usage_id=xblocks[1].locator,
-                user=self.username,
-                course_id=self.course_fixture._course_key,
-                text="Third text",
-                quote="",
-                updated=datetime(2012, 1, 1, 1, 1, 1, 1).isoformat(),
-            )
         ])
 
     def test_no_content(self):

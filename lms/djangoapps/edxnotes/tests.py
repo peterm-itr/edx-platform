@@ -532,7 +532,7 @@ class EdxNotesViewsTest(TestCase):
     @patch("edxnotes.views.search")
     def test_search_notes_is_disabled(self, mock_search):
         """
-        Tests that 404 status code is received if EdxNotes feature is disabled
+        Tests that 404 status code is received if EdxNotes feature is disabled.
         """
         mock_search.return_value = json.dumps({
             "total": 0,
@@ -543,7 +543,7 @@ class EdxNotesViewsTest(TestCase):
 
     @patch.dict("django.conf.settings.FEATURES", {"ENABLE_EDXNOTES": True})
     @patch("edxnotes.views.search")
-    def test_search_notes_without_requiered_parameters(self, mock_search):
+    def test_search_notes_without_required_parameters(self, mock_search):
         """
         Tests that 400 status code is received if the required parameters were not sent.
         """
