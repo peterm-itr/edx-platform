@@ -141,6 +141,12 @@ class ECommerceCouponsListTest(UniqueCourseTest):
         """
         self.coupons_list_section.click_to_show_add_coupon_popup()
         self.coupons_list_section.set_data_on_add_coupon_popup_and_submit(coupon_code="ABC123", discount="10", description="test")
+
+        # The page reloaded. Navigate to the page again.
+        instructor_dashboard_page = InstructorDashboardPage(self.browser, self.course_id)
+        instructor_dashboard_page.visit()
+        self.coupons_list_section = instructor_dashboard_page.select_ecommerce().select_coupons_list()
+
         self.assertTrue(self.coupons_list_section.compare_row_data(coupon_code="ABC123", discount="10", description="test", expiration_date="None", was_expired=False))
 
     def test_can_add_a_coupon_with_expiry_date(self):
@@ -154,6 +160,12 @@ class ECommerceCouponsListTest(UniqueCourseTest):
         """
         self.coupons_list_section.click_to_show_add_coupon_popup()
         self.coupons_list_section.set_data_on_add_coupon_popup_and_submit(coupon_code="ABC1234", discount="10", description="test", expiration_date="11/27/2999")
+
+        # The page reloaded. Navigate to the page again.
+        instructor_dashboard_page = InstructorDashboardPage(self.browser, self.course_id)
+        instructor_dashboard_page.visit()
+        self.coupons_list_section = instructor_dashboard_page.select_ecommerce().select_coupons_list()
+
         self.assertTrue(self.coupons_list_section.compare_row_data(coupon_code="ABC1234", discount="10", description="test", expiration_date="November 27, 2999", was_expired=False))
 
     def test_expired_coupons_show_up_in_yellow(self):
@@ -168,4 +180,10 @@ class ECommerceCouponsListTest(UniqueCourseTest):
         """
         self.coupons_list_section.click_to_show_add_coupon_popup()
         self.coupons_list_section.set_data_on_add_coupon_popup_and_submit(coupon_code="ABC12345", discount="10", description="test", expiration_date="11/27/2000")
+
+        # The page reloaded. Navigate to the page again.
+        instructor_dashboard_page = InstructorDashboardPage(self.browser, self.course_id)
+        instructor_dashboard_page.visit()
+        self.coupons_list_section = instructor_dashboard_page.select_ecommerce().select_coupons_list()
+
         self.assertTrue(self.coupons_list_section.compare_row_data(coupon_code="ABC12345", discount="10", description="test", expiration_date="November 27, 2000", was_expired=True))
