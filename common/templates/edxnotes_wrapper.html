@@ -8,8 +8,9 @@
 </div>
 <script type="text/javascript">
     (function (require) {
-        require(['js/edxnotes/views/edxnotes_wrapper_factory'], function(EdxnotesWrapperFactory) {
-            EdxnotesWrapperFactory.factory('edx-notes-wrapper-${uid}', ${json.dumps(params)}, ${edxnotes_visibility});
+        require(['js/edxnotes/views/edxnotes_visibility_decorator'], function(EdxnotesVisibilityDecorator) {
+            var element = document.getElementById('edx-notes-wrapper-${uid}');
+            EdxnotesVisibilityDecorator.factory(element, ${json.dumps(params)}, ${edxnotes_visibility});
         });
     }).call(this, require || RequireJS.require);
 </script>

@@ -1,40 +1,47 @@
 ;(function (define, undefined) {
     'use strict';
-    define(['jquery', 'underscore', 'js/edxnotes/views/edxnotes_wrapper_factory'], function($, _, EdxnotesWrapperFactory) {
+    define([
+        'jquery', 'underscore', 'js/edxnotes/views/edxnotes_visibility_decorator'
+    ], function($, _, EdxnotesVisibilityDecorator) {
         return function (visibility, visibilityUrl) {
             var checkbox = $('p.action-inline > a.action-toggle-notes'),
-                checkboxIcon = checkbox.children('i.checkbox-icon');
+                checkboxIcon = checkbox.children('i.checkbox-icon'),
+                toggleCheckbox, toggleAnnotator, sendRequest;
 
-            checkbox.on('click', function(event) {
-                visibility = !visibility;
-                toggleAnnotator();
+            toggleCheckbox = function () {
+                checkboxIcon.removeClass('icon-check icon-check-empty');
+                checkboxIcon.addClass(visibility ? 'icon-check' : 'icon-check-empty');
+            };
 
-                $.ajax({
+            toggleAnnotator = function () {
+                toggleCheckbox();
+                if (visibility) {
+                    $('.edx-notes-wrapper').each(function () {
+                        EdxnotesVisibilityDecorator.enableNote(this)
+                    });
+                } else {
+                    EdxnotesVisibilityDecorator.disableNotes();
+                }
+            };
+
+            sendRequest = function () {
+                return $.ajax({
                     type: 'PUT',
                     url: window.location.origin + visibilityUrl,
-                    contentType: 'application/json',
                     dataType: 'json',
                     data: JSON.stringify({'visibility': visibility}),
                     error: function(response) {
                         console.log(JSON.parse(response.responseText));
                     }
                 });
+            };
+
+            checkbox.on('click', function (event) {
+                visibility = !visibility;
+                toggleAnnotator();
+                sendRequest();
                 event.preventDefault();
             });
-
-            function toggleCheckbox() {
-                checkboxIcon.toggleClass('icon-check', visibility)
-                            .toggleClass('icon-check-empty', !visibility);
-            }
-
-            function toggleAnnotator() {
-                toggleCheckbox();
-                if (visibility) {
-                    _.each($('.edx-notes-wrapper'),  EdxnotesWrapperFactory.createAnnotator);
-                } else {
-                    EdxnotesWrapperFactory.destroyAllInstances();
-                }
-            }
         };
     });
 }).call(this, define || RequireJS.define);

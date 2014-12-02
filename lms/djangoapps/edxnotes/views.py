@@ -55,12 +55,9 @@ def edxnotes_visibility(request, course_id):
 
     try:
         edxnotes_visibility = json.loads(request.body)["visibility"]
-        if isinstance(edxnotes_visibility, bool):
-            course.edxnotes_visibility = edxnotes_visibility
-            modulestore().update_item(course, request.user.id)
-            return JsonResponse(status=200)
-        else:
-            raise ValueError()
+        course.edxnotes_visibility = edxnotes_visibility
+        modulestore().update_item(course, request.user.id)
+        return JsonResponse(status=200)
     except ValueError:
         log.warning(
             "Could not decode request body as JSON and find a boolean visibility field: '{0}'".format(request.body)

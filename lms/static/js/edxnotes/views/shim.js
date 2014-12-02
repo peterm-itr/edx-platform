@@ -13,7 +13,7 @@
          * so we add it here if necessary.
          **/
         if (!$.fn.addBack) {
-            $.fn.addBack = function(selector) {
+            $.fn.addBack = function (selector) {
                 return this.add(selector === null ?
                         this.prevObject : this.prevObject.filter(selector)
                 );
@@ -26,8 +26,7 @@
          * .annotator-outer, .annotator-notice, .annotator-filter. We set these
          * values in annotator.min.css instead and do nothing here.
          */
-        Annotator.prototype._setupDynamicStyle = function() {
-        }
+        Annotator.prototype._setupDynamicStyle = function () {}
 
         Annotator.frozenSrc = null;
 
@@ -112,7 +111,7 @@
                 }
             },
 
-            freeze: function() {
+            freeze: function () {
                 if (!this.isFrozen) {
                     // Remove default events
                     this.removeEvents();
@@ -123,7 +122,7 @@
                 }
             },
 
-            unfreeze: function() {
+            unfreeze: function () {
                 if (this.isFrozen) {
                     // Add default events
                     this.addEvents();
