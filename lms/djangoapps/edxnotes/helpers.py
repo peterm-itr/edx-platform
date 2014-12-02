@@ -55,6 +55,15 @@ def get_id_token(user):
     return id_token.encode(secret)
 
 
+def get_token_url(course_id):
+    """
+    Returns token url for the course.
+    """
+    return reverse("get_token", kwargs={
+        "course_id": course_id.to_deprecated_string(),
+    })
+
+
 def send_request(user, course_id, path="", query_string=""):
     """
     Sends a request with appropriate parameters and headers.

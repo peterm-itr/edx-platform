@@ -70,3 +70,4 @@ def get_token(request, course_id):
     Get JWT ID-Token, in case you need new one
     """
     return HttpResponse(get_id_token(request.user))
+
