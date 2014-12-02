@@ -10,6 +10,7 @@ from xmodule.modulestore.tests.django_utils import (
 )
 
 from xmodule.modulestore.tests.factories import CourseFactory
+from courseware.tests.factories import InstructorFactory
 from course_modes.tests.factories import CourseModeFactory
 from student.tests.factories import CourseEnrollmentFactory, UserFactory
 from student.models import CourseEnrollment
@@ -249,15 +250,18 @@ class AddHonorModeToCourseTest(UrlResetMixin, ModuleStoreTestCase):
     def setUp(self):
         super(AddHonorModeToCourseTest, self).setUp()
         self.course = CourseFactory.create()
-        self.user = UserFactory.create(username="Bob", email="bob@example.com", password="edx")
-        self.client.login(username=self.user.username, password="edx")
+        self.instructor = InstructorFactory(course_key=self.course.id)
+        self.client.login(username=self.instructor.username, password='test')
         self.url = reverse('add_honor_mode_to_course', kwargs={'course_id': self.course.id.to_deprecated_string()})
 
     def test_add_honor_mode_to_course(self):
         """
         test to add the honor mode for the course id
         """
-        print self.url
+        # get the course mode view
+        response = self.client.get(self.url)
+        self.assertEqual(200, response.status_code)
+
         data = {
             'course_mode': 'honor',
             'course_mode_display_name': 'Honor Display',
@@ -273,6 +277,10 @@ class AddHonorModeToCourseTest(UrlResetMixin, ModuleStoreTestCase):
         test that fails to create the course mode honor
         when not giving the proper course mode price
         """
+        # get the course mode view
+        response = self.client.get(self.url)
+        self.assertEqual(200, response.status_code)
+
         data = {
             'course_mode': 'honor',
             'course_mode_display_name': 'Honor Display',

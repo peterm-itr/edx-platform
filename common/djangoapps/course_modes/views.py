@@ -17,7 +17,7 @@ from edxmako.shortcuts import render_to_response
 
 from course_modes.models import CourseMode
 from courseware.access import has_access
-from instructor.views.api import require_level
+from instructor.views.api import require_level  # pylint: disable=F0401
 from student.models import CourseEnrollment
 from opaque_keys.edx.locations import SlashSeparatedCourseKey
 from opaque_keys.edx.keys import CourseKey
