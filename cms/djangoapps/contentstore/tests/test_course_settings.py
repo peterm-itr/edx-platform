@@ -754,25 +754,6 @@ class CourseGraderUpdatesTest(CourseTestCase):
         current_graders = CourseGradingModel.fetch(self.course.id).graders
         self.assertEqual(len(self.starting_graders), len(current_graders))
 
-    def test_update_weight(self):
-        """
-        Test updating a specific grading type record with weight set to special floating point number.
-        """
-        grader = {
-            "id": 0,
-            "type": "dummy",
-            "min_count": 5,
-            "drop_count": 10,
-            "short_label": "floating points",
-            "weight": 29,
-        }
-        resp = self.client.ajax_post(self.url + '/0', grader)
-        self.assertEqual(resp.status_code, 200)
-        obj = json.loads(resp.content)
-        self.assertEqual(obj, grader)
-        current_graders = CourseGradingModel.fetch(self.course.id).graders
-        self.assertEqual(len(self.starting_graders), len(current_graders))
-
     def test_add(self):
         """Test adding a grading type record."""
         # the same url works for changing the whole grading model (graceperiod, cutoffs, and grading types) when

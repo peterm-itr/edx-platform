@@ -10,7 +10,8 @@ var CourseGrader = Backbone.Model.extend({
     },
     parse : function(attrs) {
         if (attrs['weight']) {
-            attrs.weight = parseInt(attrs.weight, 10);
+            // round off value while converting it to integer
+            attrs.weight = Math.round(attrs.weight);
         }
         if (attrs['min_count']) {
             attrs.min_count = parseInt(attrs.min_count, 10);
