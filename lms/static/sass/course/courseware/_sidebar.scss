@@ -205,13 +205,17 @@
 
         &.graded {
          > a {
-           background-image: url('../images/graded.png');
-           background-repeat: no-repeat;
-           background-position: 97% center;
+           > img {
+             margin: 0;
+             position: absolute;
+             right: 7px;
+             top: 50%;
+             transform: translate(0px, -50%);
+           }
           }
 
           &.active > a {
-            @include background-image(url('../images/graded.png'), linear-gradient(top, #e6e6e6, #d6d6d6));
+            background: linear-gradient(to bottom, #e6e6e6, #d6d6d6);
           }
         }
       }
