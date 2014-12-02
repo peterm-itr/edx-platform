@@ -2,7 +2,6 @@
 Views for course info API
 """
 from django.http import Http404
-from functools import partial
 from rest_framework import generics, permissions
 from rest_framework.authentication import OAuth2Authentication, SessionAuthentication
 from rest_framework.response import Response
@@ -18,7 +17,7 @@ def _make_static_urls_absolute(request, html, course):
     """
     Converts relative URLs referencing static assets to absolute URLs
     """
-    def replace(request, __, prefix, quote, rest):
+    def replace(__, prefix, quote, rest):
         """
         Function to actually do a single relative -> absolute url replacement
         """
@@ -29,7 +28,8 @@ def _make_static_urls_absolute(request, html, course):
         html,
         data_directory=None,
         static_asset_path=course.static_asset_path,
-        replacement_function=partial(replace, request))
+        replacement_function=replace
+    )
 
 class CourseUpdatesList(generics.ListAPIView):
     """
@@ -47,8 +47,7 @@ class CourseUpdatesList(generics.ListAPIView):
 
             * date: The date of the course update.
 
-            * content: The content, as a string, of the course update. HTML tags
-              are not included in the string.
+            * content: The content, as an HTML string, of the course update.
 
             * status: Whether the update is visible or not.
 
@@ -61,10 +60,16 @@ class CourseUpdatesList(generics.ListAPIView):
         course_id = CourseKey.from_string(kwargs['course_id'])
         course = modulestore().get_course(course_id)
         course_updates_module = get_course_info_section_module(request, course, 'updates')
+        update_items = reversed(getattr(course_updates_module, 'items', []))
+
         updates_to_show = [
-            update for update in reversed(getattr(course_updates_module, 'items', []))
+            update for update in update_items
             if update.get("status") != "deleted"
         ]
+
+        for item in updates_to_show:
+            item['content'] = _make_static_urls_absolute(request, item['content'], course)
+
         return Response(updates_to_show)
 
 
