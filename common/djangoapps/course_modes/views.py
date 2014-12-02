@@ -197,6 +197,9 @@ class ChooseModeView(View):
             return None
 
 
+@ensure_csrf_cookie
+@cache_control(no_cache=True, no_store=True, must_revalidate=True)
+@require_level('staff')
 def add_honor_mode_to_course(request, course_id):
     """
     Create the honor mode for the course_id

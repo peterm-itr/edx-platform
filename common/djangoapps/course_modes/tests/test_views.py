@@ -2,7 +2,6 @@ import unittest
 import decimal
 import ddt
 from django.conf import settings
-from mock import patch
 from django.test.utils import override_settings
 from django.core.urlresolvers import reverse
 

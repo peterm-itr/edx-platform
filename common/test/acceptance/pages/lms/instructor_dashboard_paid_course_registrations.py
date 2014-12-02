@@ -5,7 +5,6 @@ Instructor Dashboard Page for Paid Course Registrations.
 
 from bok_choy.page_object import PageObject
 from ...fixtures import LMS_BASE_URL
-import urllib
 
 
 class AddHonorModeToCoursePage(PageObject):
@@ -18,21 +17,25 @@ class AddHonorModeToCoursePage(PageObject):
         super(AddHonorModeToCoursePage, self).__init__(browser)
 
         # Create query string parameters if provided
-        self._params = {'course_id': course_id}
+        self.course_id = course_id
 
     @property
     def url(self):
         """
         Construct the URL with the Query parameter (course ID) to send to the API
         """
-        url = LMS_BASE_URL + "/course_modes/add_honor_mode_to_course"
-
-        query_str = urllib.urlencode(self._params)
-        url += "?" + query_str
-
+        url = LMS_BASE_URL + "/course_modes/add_honor_mode_to_course/%s" % self.course_id
         return url
 
     def is_browser_on_page(self):
+        self.wait_for_element_presence('.add-course-mode #add_course_mode_form', 'Add Course Mode Form')
+        self.q(css="form input[name='course_mode']").results[0].send_keys('honor')
+        self.q(css="form input[name='course_mode_display_name']").results[0].send_keys('honor')
+        self.q(css="form input[name='course_mode_price']").results[0].send_keys('100')
+        self.q(css="form input[name='course_mode_currency']").results[0].send_keys('usd')
+        self.q(css=".add-course-mode #add_course_mode_form input[type='submit']").click()
+
+        self.wait_for_element_absence('.add-course-mode #add_course_mode_form', "Add Course Mode Form removed from the success page.")
         self.wait_for_element_presence('body', 'body')
         response_text = self.q(css='body').first.text[0]
         return response_text == "success"
