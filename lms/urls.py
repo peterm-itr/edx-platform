@@ -10,6 +10,8 @@ from microsite_configuration import microsite
 if settings.DEBUG or settings.FEATURES.get('ENABLE_DJANGO_ADMIN_SITE'):
     admin.autodiscover()
 
+# TODO: remove this line before merging.
+
 urlpatterns = ('',  # nopep8
     # certificate view
     url(r'^update_certificate$', 'certificates.views.update_certificate'),
