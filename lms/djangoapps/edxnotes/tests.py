@@ -5,13 +5,13 @@ import json
 from mock import patch, MagicMock
 from unittest import skipUnless
 from datetime import datetime
+from edxmako.shortcuts import render_to_string
 from edxnotes.decorators import edxnotes
 from django.conf import settings
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ImproperlyConfigured
 from oauth2_provider.tests.factories import ClientFactory
-
 from xmodule.tabs import EdxNotesTab
 from xmodule.modulestore.django import modulestore
 from xmodule.modulestore.tests.factories import CourseFactory, ItemFactory
@@ -65,13 +65,34 @@ class EdxNotesDecoratorTest(TestCase):
         self.problem = TestProblem(self.course)
 
     @patch.dict("django.conf.settings.FEATURES", {'ENABLE_EDXNOTES': True})
-    def test_edxnotes_enabled(self):
+    @patch("edxnotes.decorators.get_endpoint")
+    @patch("edxnotes.decorators.get_token")
+    @patch("edxnotes.decorators.generate_uid")
+    def test_edxnotes_enabled(self, mock_generate_uid, mock_get_token, mock_get_endpoint):
         """
         Tests if get_html is wrapped when feature flag is on and edxnotes are
         enabled for the course.
         """
+        mock_generate_uid.return_value = "uid"
+        mock_get_token.return_value = "token"
+        mock_get_endpoint.return_value = "/endpoint"
         enable_edxnotes_for_the_course(self.course, self.user.id)
-        self.assertIn('edx-notes-wrapper', self.problem.get_html())
+        expected_context = {
+            "content": "original_get_html",
+            "uid": "uid",
+            "edxnotes_visibility": "true",
+            "params": {
+                "usageId": u"test_usage_id",
+                "courseId": unicode(self.course.id).encode("utf-8"),
+                "token": "token",
+                "endpoint": "/endpoint",
+                "debug": settings.DEBUG,
+            },
+        }
+        self.assertEqual(
+            self.problem.get_html(),
+            render_to_string("edxnotes_wrapper.html", expected_context),
+        )
 
     @patch.dict("django.conf.settings.FEATURES", {'ENABLE_EDXNOTES': True})
     def test_edxnotes_disabled_if_edxnotes_flag_is_false(self):

@@ -33,7 +33,6 @@ def edxnotes(request, course_id):
 
     notes = get_notes(request.user, course)
     context = {
-        # Use camelCase to name keys.
         "course": course,
         "endpoint": get_endpoint(),
         "notes": notes,
@@ -45,9 +44,9 @@ def edxnotes(request, course_id):
 
 
 def edxnotes_visibility(request, course_id):
-    '''
-    Handle ajax call from "Show notes" checkbox
-    '''
+    """
+    Handle ajax call from "Show notes" checkbox.
+    """
     course_key = SlashSeparatedCourseKey.from_deprecated_string(course_id)
     course = get_course_with_access(request.user, "load", course_key)
 
