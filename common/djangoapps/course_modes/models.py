@@ -153,7 +153,7 @@ class CourseMode(models.Model):
         if not modes:
             modes = [cls.DEFAULT_MODE]
         return modes
-    
+
     @classmethod
     def create_course_mode(cls, course_id, min_price, mode_slug, currency, mode_display_name=DEFAULT_MODE_SLUG):
         """
@@ -168,7 +168,7 @@ class CourseMode(models.Model):
         )
         course_mode.save()
         return course_mode
-    
+
     @classmethod
     def modes_for_course_dict(cls, course_id, modes=None):
         """Returns the non-expired modes for a particular course.

@@ -10,7 +10,7 @@ from xmodule.modulestore.tests.django_utils import (
 )
 
 from xmodule.modulestore.tests.factories import CourseFactory
-from courseware.tests.factories import InstructorFactory
+from courseware.tests.factories import InstructorFactory  # pylint: disable=F0401
 from course_modes.tests.factories import CourseModeFactory
 from student.tests.factories import CourseEnrollmentFactory, UserFactory
 from student.models import CourseEnrollment
