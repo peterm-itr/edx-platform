@@ -38,7 +38,7 @@ define([
                 }
             });
             loadFixtures('js/fixtures/edxnotes/edxnotes.html');
-            TemplateHelpers.installTemplate([
+            TemplateHelpers.installTemplates([
                 'templates/edxnotes/recent-activity-item',
                 'templates/edxnotes/tab-item'
             ]);

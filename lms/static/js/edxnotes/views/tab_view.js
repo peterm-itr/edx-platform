@@ -12,7 +12,7 @@ define([
         },
 
         initialize: function (options) {
-            _.bindAll(this);
+            _.bindAll(this, 'showLoadingIndicator', 'hideLoadingIndicator');
             this.options = _.defaults(options || {}, {
                 createTabOnInitialization: true
             });
@@ -29,19 +29,19 @@ define([
             this.tabModel = new TabModel(this.tabInfo);
             this.options.tabsCollection.add(this.tabModel);
             this.tabModel.on({
-                'change:is_active': _.bind(function (model, value) {
+                'change:is_active': function (model, value) {
                     if (value) {
                         this.render();
                     } else {
                         this.destroySubView();
                     }
-                }, this),
-                'destroy': _.bind(function () {
+                },
+                'destroy': function () {
                     this.destroySubView();
                     this.tabModel = null;
                     this.onClose();
-                }, this)
-            });
+                }
+            }, this);
         },
 
         /**

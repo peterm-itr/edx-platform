@@ -8,11 +8,8 @@ define([
 ) {
     var NotesPageView = Backbone.View.extend({
         initialize: function (options) {
-            _.bindAll(this);
             this.options = options;
-
             this.tabsCollection = new TabsCollection();
-
             this.recentActivityView = new RecentActivityView({
                 el: this.el,
                 collection: this.collection,

@@ -8,7 +8,6 @@ define([
         className: 'tabs',
 
         initialize: function (options) {
-            _.bindAll(this);
             this.options = options;
             this.collection.on({
                 'add': this.createTab,
@@ -17,11 +16,11 @@ define([
                         collection.at(0).activate();
                     }
                 }
-            });
+            }, this);
         },
 
         render: function () {
-            this.collection.each(this.createTab);
+            this.collection.each(this.createTab, this);
             if (this.collection.length) {
                 this.collection.at(0).activate();
             }

@@ -13,7 +13,7 @@ define([
         emptyFieldMessage: gettext('Search field cannot be blank.'),
 
         initialize: function (options) {
-            _.bindAll(this);
+            _.bindAll(this, 'onSuccess', 'onError', 'onComplete');
             this.options = _.defaults(options || {}, {
                 beforeSearchStart: function () {},
                 search: function () {},
@@ -52,20 +52,20 @@ define([
          * Returns search text.
          * @return {String}
          */
-        gerSearchQuery: function () {
+        getSearchQuery: function () {
             return this.$el.find('#search-field').val();
         },
 
         /**
          * Starts search if form is not disabled.
-         * @return {Boolen} Indicates if search is started or not.
+         * @return {Boolean} Indicates if search is started or not.
          */
         search: function () {
             if (this.isDisabled) {
                 return false;
             }
 
-            this.searchQuery = this.gerSearchQuery();
+            this.searchQuery = this.getSearchQuery();
             if (!this.validateField(this.searchQuery)) {
                 return false;
             }
@@ -99,7 +99,7 @@ define([
         },
 
         onError:function (jXHR) {
-            var searchQuery = this.gerSearchQuery(),
+            var searchQuery = this.getSearchQuery(),
                 message;
 
             if (jXHR.responseText) {

@@ -41,6 +41,7 @@ define([
         },
 
         initialize: function (options) {
+            _.bindAll(this, 'onBeforeSearchStart', 'onSearch', 'onSearchError');
             TabView.prototype.initialize.call(this, options);
             this.searchResults = null;
             this.searchBox = new SearchBoxView({

@@ -14,7 +14,6 @@ function (gettext, _, Backbone) {
         },
 
         initialize: function (options) {
-            _.bindAll(this);
             this.template = _.template($('#tab-item-tpl').text());
             this.options = options;
             this.$el.addClass(this.model.get('class_name'));
@@ -29,15 +28,11 @@ function (gettext, _, Backbone) {
 
         bindEvents: function () {
             this.model.on({
-                'change:is_active': _.bind(function (model, value) {
-                    if (value) {
-                        this.$el.addClass(this.activeClassName);
-                    } else {
-                        this.$el.removeClass(this.activeClassName);
-                    }
-                }, this),
+                'change:is_active': function (model, value) {
+                    this.$el.toggleClass(this.activeClassName, value);
+                },
                 'destroy': this.remove
-            });
+            }, this);
         },
 
         selectHandler: function (event) {

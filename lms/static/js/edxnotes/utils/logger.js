@@ -1,7 +1,7 @@
 ;(function (define) {
 'use strict';
 define([], function () {
-    var loggersList = [],
+    var loggers = [],
         Logger, now, destroyLogger;
 
     now = function () {
@@ -15,18 +15,18 @@ define([], function () {
     };
 
     /**
-     * Removes a reference on the logger from `loggersList`.
+     * Removes a reference on the logger from `loggers`.
      * @param  {Object} logger An instance of Logger.
      */
     destroyLogger = function (logger) {
-        var index = loggersList.length,
+        var index = loggers.length,
             removedLogger;
 
         while(index--) {
-            if (loggersList[index].id === logger.id) {
-                removedLogger = [].splice.call(loggersList, index, 1)[0];
-                removedLogger._history = [];
-                removedLogger._times = {};
+            if (loggers[index].id === logger.id) {
+                removedLogger = loggers.splice(index, 1)[0];
+                removedLogger.historyStorage = [];
+                removedLogger.timeStorage = {};
                 break;
             }
         }
@@ -40,8 +40,8 @@ define([], function () {
      */
     Logger = function (id, mode) {
         this.id = id;
-        this._history = [];
-        this._times = {};
+        this.historyStorage = [];
+        this.timeStorage = {};
         // 0 - silent;
         // 1 - show logs;
         this.logLevel = mode;
@@ -87,7 +87,7 @@ define([], function () {
      * Adds information to the history.
      */
     Logger.prototype.updateHistory = function () {
-        this._history.push(arguments);
+        this.historyStorage.push(arguments);
     };
 
     /**
@@ -95,7 +95,7 @@ define([], function () {
      * @return {Array}
      */
     Logger.prototype.getHistory = function () {
-        return this._history;
+        return this.historyStorage;
     };
 
     /**
@@ -103,7 +103,7 @@ define([], function () {
      * @param {String} label Timer name.
      */
     Logger.prototype.time = function (label) {
-        this._times[label] = now();
+        this.timeStorage[label] = now();
     };
 
     /**
@@ -111,12 +111,12 @@ define([], function () {
      * @param {String} label Timer name.
      */
     Logger.prototype.timeEnd = function (label) {
-        if (!this._times[label]) {
+        if (!this.timeStorage[label]) {
             return null;
         }
 
-        this._log('log', [label, now() - this._times[label], 'ms']);
-        delete this._times[label];
+        this._log('log', [label, now() - this.timeStorage[label], 'ms']);
+        delete this.timeStorage[label];
     };
 
     Logger.prototype.destroy = function () {
@@ -126,7 +126,7 @@ define([], function () {
     return {
         getLogger: function (id, mode) {
             var logger = new Logger(id, mode);
-            loggersList.push(logger);
+            loggers.push(logger);
             return logger;
         },
         destroyLogger: destroyLogger
