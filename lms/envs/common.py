@@ -38,7 +38,7 @@ from lms.lib.xblock.mixin import LmsBlockMixin
 
 ################################### FEATURES ###################################
 # The display name of the platform to be used in templates/emails/etc.
-PLATFORM_NAME = "Your Platform Name Here"
+PLATFORM_NAME = "Юнитал-М"
 CC_MERCHANT_NAME = PLATFORM_NAME
 
 PLATFORM_FACEBOOK_ACCOUNT = "http://www.facebook.com/YourPlatformFacebookAccount"
@@ -170,7 +170,7 @@ FEATURES = {
     'ENABLE_SERVICE_STATUS': False,
 
     # Toggle to indicate use of a custom theme
-    'USE_CUSTOM_THEME': False,
+    'USE_CUSTOM_THEME': True,
 
     # Don't autoplay videos for students
     'AUTOPLAY_VIDEOS': False,
@@ -197,7 +197,7 @@ FEATURES = {
 
     # Toggle to enable chat availability (configured on a per-course
     # basis in Studio)
-    'ENABLE_CHAT': False,
+    'ENABLE_CHAT': True,
 
     # Allow users to enroll with methods other than just honor code certificates
     'MULTIPLE_ENROLLMENT_ROLES': False,

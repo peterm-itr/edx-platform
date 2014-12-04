@@ -107,6 +107,8 @@ FEATURES = {
 
     # Modulestore to use for new courses
     'DEFAULT_STORE_FOR_NEW_COURSE': None,
+
+    'DISABLE_COURSE_CREATION': True,
 }
 ENABLE_JASMINE = False
 
