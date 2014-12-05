@@ -73,8 +73,8 @@ from social.exceptions import AuthException
 from social.pipeline import partial
 
 import student
-from shoppingcart.models import Order, PaidCourseRegistration  # pylint: disable=F0401
-from shoppingcart.exceptions import (  # pylint: disable=F0401
+from shoppingcart.models import Order, PaidCourseRegistration  # pylint: disable=import-error
+from shoppingcart.exceptions import (  # pylint: disable=import-error
     CourseDoesNotExistException,
     ItemAlreadyInCartException,
     AlreadyEnrolledInCourseException
@@ -451,6 +451,7 @@ def parse_query_params(strategy, response, *args, **kwargs):
         'is_login_2': auth_entry == AUTH_ENTRY_LOGIN_2,
         'is_register_2': auth_entry == AUTH_ENTRY_REGISTER_2,
     }
+
 
 # TODO (ECOM-369): Once the A/B test of the combined login/registration
 # form completes, we will be able to remove the extra login/registration

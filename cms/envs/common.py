@@ -22,7 +22,7 @@ Longer TODO:
 
 # We intentionally define lots of variables that aren't used, and
 # want to import all variables from base settings files
-# pylint: disable=W0401, W0611, W0614
+# pylint: disable=wildcard-import, unused-import, unused-wildcard-import
 
 import imp
 import os
@@ -744,6 +744,10 @@ ADVANCED_COMPONENT_TYPES = [
     'peergrading',
     'notes',
 ]
+
+# Adding components in this list will disable the creation of new problem for those
+# compoenents in studio. Existing problems will work fine and one can edit them in studio
+DEPRECATED_ADVANCED_COMPONENT_TYPES = []
 
 # Specify xblocks that should be treated as advanced problems. Each entry is a tuple
 # specifying the xblock name and an optional YAML template to be used.

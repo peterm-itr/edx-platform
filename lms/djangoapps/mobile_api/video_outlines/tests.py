@@ -127,7 +127,7 @@ class TestVideoOutline(ModuleStoreTestCase, APITestCase):
         url = reverse('video-summary-list', kwargs={'course_id': unicode(self.course.id)})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        return response.data  # pylint: disable=E1103
+        return response.data  # pylint: disable=maybe-no-member
 
     def _create_video_with_subs(self):
         """
@@ -188,6 +188,7 @@ class TestVideoOutline(ModuleStoreTestCase, APITestCase):
         self.assertEqual(course_outline[1]['summary']['video_url'], self.html5_video_url)
         self.assertEqual(course_outline[1]['summary']['size'], 0)
         self.assertEqual(course_outline[1]['path'][2]['name'], self.other_unit.display_name)
+        self.assertEqual(course_outline[1]['path'][2]['id'], unicode(self.other_unit.location))
 
         self.assertEqual(course_outline[2]['summary']['video_url'], self.html5_video_url)
         self.assertEqual(course_outline[2]['summary']['size'], 0)

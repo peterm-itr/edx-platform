@@ -22,7 +22,7 @@ Longer TODO:
 
 # We intentionally define lots of variables that aren't used, and
 # want to import all variables from base settings files
-# pylint: disable=W0401, W0611, W0614, C0103
+# pylint: disable=wildcard-import, unused-import, unused-wildcard-import, invalid-name
 
 import sys
 import os
@@ -668,6 +668,7 @@ CONTACT_EMAIL = 'info@example.com'
 BUGS_EMAIL = 'bugs@example.com'
 UNIVERSITY_EMAIL = 'university@example.com'
 PRESS_EMAIL = 'press@example.com'
+FINANCE_EMAIL = ''
 ADMINS = ()
 MANAGERS = ADMINS
 
@@ -1045,6 +1046,7 @@ student_account_js = [
     'js/utils/edx.utils.validate.js',
     'js/src/utility.js',
     'js/student_account/enrollment.js',
+    'js/student_account/emailoptin.js',
     'js/student_account/shoppingcart.js',
     'js/student_account/models/LoginModel.js',
     'js/student_account/models/RegisterModel.js',
@@ -1364,6 +1366,10 @@ BULK_EMAIL_LOG_SENT_EMAILS = False
 # parallel, and what the SES rate is.
 BULK_EMAIL_RETRY_DELAY_BETWEEN_SENDS = 0.02
 
+############################# Email Opt In ####################################
+
+# Minimum age for organization-wide email opt in
+EMAIL_OPTIN_MINIMUM_AGE = 13
 
 ############################## Video ##########################################
 

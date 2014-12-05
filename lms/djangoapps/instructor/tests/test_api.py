@@ -2,7 +2,7 @@
 """
 Unit tests for instructor.api methods.
 """
-# pylint: disable=E1111
+
 import unittest
 import json
 import requests
@@ -79,19 +79,19 @@ REPORTS_DATA = (
 
 
 @common_exceptions_400
-def view_success(request):  # pylint: disable=W0613
+def view_success(request):  # pylint: disable=unused-argument
     "A dummy view for testing that returns a simple HTTP response"
     return HttpResponse('success')
 
 
 @common_exceptions_400
-def view_user_doesnotexist(request):  # pylint: disable=W0613
+def view_user_doesnotexist(request):  # pylint: disable=unused-argument
     "A dummy view that raises a User.DoesNotExist exception"
     raise User.DoesNotExist()
 
 
 @common_exceptions_400
-def view_alreadyrunningerror(request):  # pylint: disable=W0613
+def view_alreadyrunningerror(request):  # pylint: disable=unused-argument
     "A dummy view that raises an AlreadyRunningError exception"
     raise AlreadyRunningError()
 
@@ -111,26 +111,26 @@ class TestCommonExceptions400(unittest.TestCase):
 
     def test_user_doesnotexist(self):
         self.request.is_ajax.return_value = False
-        resp = view_user_doesnotexist(self.request)
+        resp = view_user_doesnotexist(self.request)  # pylint: disable=assignment-from-no-return
         self.assertEqual(resp.status_code, 400)
         self.assertIn("User does not exist", resp.content)
 
     def test_user_doesnotexist_ajax(self):
         self.request.is_ajax.return_value = True
-        resp = view_user_doesnotexist(self.request)
+        resp = view_user_doesnotexist(self.request)  # pylint: disable=assignment-from-no-return
         self.assertEqual(resp.status_code, 400)
         result = json.loads(resp.content)
         self.assertIn("User does not exist", result["error"])
 
     def test_alreadyrunningerror(self):
         self.request.is_ajax.return_value = False
-        resp = view_alreadyrunningerror(self.request)
+        resp = view_alreadyrunningerror(self.request)  # pylint: disable=assignment-from-no-return
         self.assertEqual(resp.status_code, 400)
         self.assertIn("Task is already running", resp.content)
 
     def test_alreadyrunningerror_ajax(self):
         self.request.is_ajax.return_value = True
-        resp = view_alreadyrunningerror(self.request)
+        resp = view_alreadyrunningerror(self.request)  # pylint: disable=assignment-from-no-return
         self.assertEqual(resp.status_code, 400)
         result = json.loads(resp.content)
         self.assertIn("Task is already running", result["error"])
@@ -569,7 +569,7 @@ class TestInstructorAPIEnrollment(ModuleStoreTestCase, LoginEnrollmentTestCase):
 
         # uncomment to enable enable printing of large diffs
         # from failed assertions in the event of a test failure.
-        # (comment because pylint C0103)
+        # (comment because pylint C0103(invalid-name))
         # self.maxDiff = None
 
     def tearDown(self):
@@ -1119,7 +1119,7 @@ class TestInstructorAPIBulkBetaEnrollment(ModuleStoreTestCase, LoginEnrollmentTe
 
         # uncomment to enable enable printing of large diffs
         # from failed assertions in the event of a test failure.
-        # (comment because pylint C0103)
+        # (comment because pylint C0103(invalid-name))
         # self.maxDiff = None
 
     def test_missing_params(self):
@@ -3009,6 +3009,30 @@ class TestCourseRegistrationCodes(ModuleStoreTestCase):
                 order_id=i, registration_code_id=i, redeemed_by=self.instructor
             )
             registration_code_redemption.save()
+
+    @override_settings(FINANCE_EMAIL='finance@example.com')
+    def test_finance_email_in_recipient_list_when_generating_registration_codes(self):
+        """
+        Test to verify that the invoice will also be sent to the FINANCE_EMAIL when
+        generating registration codes
+        """
+        url_reg_code = reverse('generate_registration_codes',
+                               kwargs={'course_id': self.course.id.to_deprecated_string()})
+
+        data = {
+            'total_registration_codes': 5, 'company_name': 'Group Alpha', 'company_contact_name': 'Test@company.com',
+            'company_contact_email': 'Test@company.com', 'sale_price': 121.45, 'recipient_name': 'Test123',
+            'recipient_email': 'test@123.com', 'address_line_1': 'Portland Street', 'address_line_2': '',
+            'address_line_3': '', 'city': '', 'state': '', 'zip': '', 'country': '',
+            'customer_reference_number': '123A23F', 'internal_reference': '', 'invoice': 'True'
+        }
+
+        response = self.client.post(url_reg_code, data, **{'HTTP_HOST': 'localhost'})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response['Content-Type'], 'text/csv')
+        # check for the last mail.outbox, The FINANCE_EMAIL has been appended at the
+        # very end, when generating registration codes
+        self.assertEqual(mail.outbox[-1].to[0], 'finance@example.com')
 
     def test_user_invoice_copy_preference(self):
         """

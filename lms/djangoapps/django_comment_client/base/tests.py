@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.core.urlresolvers import reverse
 from mock import patch, ANY, Mock
-from nose.tools import assert_true, assert_equal  # pylint: disable=E0611
+from nose.tools import assert_true, assert_equal  # pylint: disable=no-name-in-module
 from opaque_keys.edx.locations import SlashSeparatedCourseKey
 
 from courseware.tests.modulestore_config import TEST_DATA_MONGO_MODULESTORE
@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 
 CS_PREFIX = "http://localhost:4567/api/v1"
 
-# pylint: disable=C0111
+# pylint: disable=missing-docstring
 
 
 class MockRequestSetupMixin(object):
@@ -1036,8 +1036,8 @@ class UsersEndpointTestCase(ModuleStoreTestCase, MockRequestSetupMixin):
         response = self.make_request(username="other")
         self.assertEqual(response.status_code, 404)
         content = json.loads(response.content)
-        self.assertTrue(content.has_key("errors"))
-        self.assertFalse(content.has_key("users"))
+        self.assertIn("errors", content)
+        self.assertNotIn("users", content)
 
     @patch('lms.lib.comment_client.utils.requests.request')
     def test_requires_matched_user_has_forum_content(self, mock_request):
