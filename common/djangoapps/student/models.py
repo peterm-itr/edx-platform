@@ -177,6 +177,23 @@ class UserStanding(models.Model):
     changed_by = models.ForeignKey(User, blank=True)
     standing_last_changed_at = models.DateTimeField(auto_now=True)
 
+class Company(models.Model):
+    """
+    Contains companies users may be assigned to.
+    """
+    class Meta: # pylint: disable=missing-docstring
+        db_table = "company"
+
+    title = models.CharField(blank=True, max_length=255, db_index=True)
+    address = models.TextField(blank=True)
+    real_address = models.TextField(blank=True)
+    inn = models.CharField(blank=True, max_length=255)
+    kpk = models.CharField(blank=True, max_length=255)
+    ceo_name = models.CharField(blank=True, max_length=255)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(blank=True, max_length=255)
+
+
 
 class UserProfile(models.Model):
     """This is where we store all the user demographic fields. We have a
@@ -254,6 +271,11 @@ class UserProfile(models.Model):
     country = CountryField(blank=True, null=True)
     goals = models.TextField(blank=True, null=True)
     allow_certificate = models.BooleanField(default=1)
+
+    # Unital-specific fields
+    phone = models.TextField(blank=True, null=True)
+    is_representative = models.BooleanField(default=0)
+    company = models.ForeignKey(Company, db_index=True, blank=True, null=True)
 
     def get_meta(self):  # pylint: disable=missing-docstring
         js_str = self.meta

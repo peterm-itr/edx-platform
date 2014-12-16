@@ -41,6 +41,16 @@
         $("label").parent().removeClass("is-focused");
       });
 
+      $("#is_representative").change(function() {
+        if ($(this).prop('checked')) {
+          $('#' + $(this).attr('rel')).show();
+          $('#company_title').prop('required', true).attr('aria-required', 'true');
+        } else {
+          $('#' + $(this).attr('rel')).hide();
+          $('#company_title').prop('required', false).removeAttr('aria-required');
+        }
+      });
+
     });
 
     (function() {
@@ -243,6 +253,12 @@
         <h2 class="sr">${_("Additional Personal Information")}</h2>
 
         <ol class="list-input">
+          % if settings.REGISTRATION_EXTRA_FIELDS['phone'] != 'hidden':
+          <li class="field ${settings.REGISTRATION_EXTRA_FIELDS['phone']} text" id="field-phone">
+            <label for="phone">${_('Phone')}</label>
+            <input id="phone" type="text" name="phone" value="" placeholder="${_('example: +74951234567')}" aria-describedby="phone-tip" ${'required aria-required="true"' if settings.REGISTRATION_EXTRA_FIELDS['phone'] == 'required' else ''} />
+          </li>
+          % endif
           % if settings.REGISTRATION_EXTRA_FIELDS['city'] != 'hidden':
           <li class="field ${settings.REGISTRATION_EXTRA_FIELDS['city']} text" id="field-city">
             <label for="city">${_('City')}</label>
@@ -319,6 +335,49 @@
             <textarea id="goals" name="goals" value="" ${'required aria-required="true"' if settings.REGISTRATION_EXTRA_FIELDS['goals'] == 'required' else ''}></textarea>
           </li>
           % endif
+        </ol>
+      </div>
+
+      <div class="group group-form group-form-organization">
+        <h2 class="sr">${_("Company")}</h2>
+        <div class="field optional checkbox" id="field-org">
+          <input id="is_representative" type="checkbox" rel="company-extra-fields" name="is_representative" value="true" />
+          <label for="is_representative">${_('I represent a company')}</label>
+        </div>
+
+        <ol class="list-input" id="company-extra-fields" style="display: none;">
+          <li class="field required text">
+            <label for="company_title">${_('Company Name')}</label>
+            <input id="company_title" name="company_title" type="text" value="" />
+          </li>
+          <li class="field optional text">
+            <label for="company_address">${_('Address')}</label>
+            <textarea id="company_address" name="company_address" rows="3" type="text" value=""></textarea>
+          </li>
+          <li class="field optional text">
+            <label for="company_real_address">${_('Real Address')}</label>
+            <textarea id="company_real_address" name="company_real_address" rows="3" type="text" value=""></textarea>
+          </li>
+          <li class="field optional text">
+            <label for="company_inn">${_('INN')}</label>
+            <input id="company_inn" name="company_inn" type="text" value="" />
+          </li>
+          <li class="field optional text">
+            <label for="company_kpk">${_('KPK')}</label>
+            <input id="company_kpk" name="company_kpk" type="text" value="" />
+          </li>
+          <li class="field optional text">
+            <label for="company_ceo_name">${_('CEO Name')}</label>
+            <input id="company_ceo_name" name="company_ceo_name" type="text" value="" />
+          </li>
+          <li class="field optional text">
+            <label for="company_email">${_('Email')}</label>
+            <input id="company_email" name="company_email" type="email" value="" />
+          </li>
+          <li class="field optional text">
+            <label for="company_phone">${_('Phone')}</label>
+            <input id="company_phone" name="company_phone" type="text" value="" />
+          </li>
         </ol>
       </div>
 

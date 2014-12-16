@@ -53,7 +53,7 @@ from student.models import (
     PendingEmailChange, CourseEnrollment, unique_id_for_user,
     CourseEnrollmentAllowed, UserStanding, LoginFailures,
     create_comments_service_user, PasswordHistory, UserSignupSource,
-    DashboardConfiguration)
+    DashboardConfiguration, Company)
 from student.forms import PasswordResetFormNoActive
 
 from verify_student.models import SoftwareSecurePhotoVerification, MidcourseReverificationWindow
@@ -1330,6 +1330,26 @@ def _do_create_account(post_vars, extended_profile=None):
     profile.city = post_vars.get('city')
     profile.country = post_vars.get('country')
     profile.goals = post_vars.get('goals')
+    profile.phone = post_vars.get('phone')
+
+    if 'is_representative' in post_vars:
+        company = Company(title = post_vars['company_title'])
+        company.address = post_vars['company_address']
+        company.real_address = post_vars['company_real_address']
+        company.inn = post_vars['company_inn']
+        company.kpk = post_vars['company_kpk']
+        company.ceo_name = post_vars['company_ceo_name']
+        company.email = post_vars['company_email']
+        company.phone = post_vars['company_phone']
+
+        try:
+            company.save()
+        except Exception: #pylint: disable=broad-except
+            log.exception("Company creation failed for user {id}.".format(id=user.id))
+            raise
+
+        profile.is_representative = True
+        profile.company = company
 
     # add any extended profile information in the denormalized 'meta' field in the profile
     if extended_profile:
@@ -1430,6 +1450,10 @@ def create_account(request, post_override=None):  # pylint: disable-msg=too-many
     required_post_vars = ['username', 'email', 'name', 'password']
     required_post_vars += [fieldname for fieldname, val in extra_fields.items()
                            if val == 'required']
+
+    if 'is_representative' in post_vars:
+        required_post_vars.append('company_title')
+
     if tos_required:
         required_post_vars.append('terms_of_service')
 
@@ -1453,7 +1477,9 @@ def create_account(request, post_override=None):  # pylint: disable-msg=too-many
                 'mailing_address': _('Your mailing address is required'),
                 'goals': _('A description of your goals is required'),
                 'city': _('A city is required'),
-                'country': _('A country is required')
+                'country': _('A country is required'),
+                'phone': _('A phone is required'),
+                'company_title': _('Company name is required')
             }
 
             if field_name in error_str:
