@@ -8,20 +8,6 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'Company'
-        db.create_table('company', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('title', self.gf('django.db.models.fields.CharField')(db_index=True, max_length=255, blank=True)),
-            ('address', self.gf('django.db.models.fields.TextField')(blank=True)),
-            ('real_address', self.gf('django.db.models.fields.TextField')(blank=True)),
-            ('inn', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('kpk', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('ceo_name', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('email', self.gf('django.db.models.fields.EmailField')(max_length=75, blank=True)),
-            ('phone', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-        ))
-        db.send_create_signal('student', ['Company'])
-
         # Adding field 'UserProfile.phone'
         db.add_column('auth_userprofile', 'phone',
                       self.gf('django.db.models.fields.TextField')(null=True, blank=True),
@@ -34,14 +20,11 @@ class Migration(SchemaMigration):
 
         # Adding field 'UserProfile.company'
         db.add_column('auth_userprofile', 'company',
-                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['student.Company'], null=True, blank=True),
+                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['company.Company'], null=True, blank=True),
                       keep_default=False)
 
 
     def backwards(self, orm):
-        # Deleting model 'Company'
-        db.delete_table('company')
-
         # Deleting field 'UserProfile.phone'
         db.delete_column('auth_userprofile', 'phone')
 
@@ -82,6 +65,18 @@ class Migration(SchemaMigration):
             'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'}),
             'username': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '30'})
         },
+        'company.company': {
+            'Meta': {'object_name': 'Company', 'db_table': "'company'"},
+            'address': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            'ceo_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'email': ('django.db.models.fields.EmailField', [], {'max_length': '75', 'blank': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'inn': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'kpk': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'phone': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'real_address': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            'title': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '255', 'blank': 'True'})
+        },
         'contenttypes.contenttype': {
             'Meta': {'ordering': "('name',)", 'unique_together': "(('app_label', 'model'),)", 'object_name': 'ContentType', 'db_table': "'django_content_type'"},
             'app_label': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
@@ -95,18 +90,6 @@ class Migration(SchemaMigration):
             'course_id': ('xmodule_django.models.CourseKeyField', [], {'db_index': 'True', 'max_length': '255', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
-        },
-        'student.company': {
-            'Meta': {'object_name': 'Company', 'db_table': "'company'"},
-            'address': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
-            'ceo_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'email': ('django.db.models.fields.EmailField', [], {'max_length': '75', 'blank': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'inn': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'kpk': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'phone': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'real_address': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
-            'title': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '255', 'blank': 'True'})
         },
         'student.courseaccessrole': {
             'Meta': {'unique_together': "(('user', 'org', 'course_id', 'role'),)", 'object_name': 'CourseAccessRole'},
@@ -179,7 +162,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'UserProfile', 'db_table': "'auth_userprofile'"},
             'allow_certificate': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'city': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
-            'company': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['student.Company']", 'null': 'True', 'blank': 'True'}),
+            'company': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['company.Company']", 'null': 'True', 'blank': 'True'}),
             'country': ('django_countries.fields.CountryField', [], {'max_length': '2', 'null': 'True', 'blank': 'True'}),
             'courseware': ('django.db.models.fields.CharField', [], {'default': "'course.xml'", 'max_length': '255', 'blank': 'True'}),
             'gender': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '6', 'null': 'True', 'blank': 'True'}),

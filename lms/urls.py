@@ -353,6 +353,9 @@ if settings.COURSEWARE_ENABLED:
         url(r'^courses/{}/cohorts/(?P<cohort_id>[0-9]+)/add$'.format(settings.COURSE_KEY_PATTERN),
             'course_groups.views.add_users_to_cohort',
             name="add_to_cohort"),
+        # url(r'^courses/{}/cohorts/(?P<cohort_id>[0-9]+)/progress$'.format(settings.COURSE_KEY_PATTERN),
+        #     'course_groups.views.cohort_user_progress',
+        #     name="cohort_progress"),
         url(r'^courses/{}/cohorts/(?P<cohort_id>[0-9]+)/delete$'.format(settings.COURSE_KEY_PATTERN),
             'course_groups.views.remove_user_from_cohort',
             name="remove_from_cohort"),
@@ -377,6 +380,9 @@ if settings.COURSEWARE_ENABLED:
         # Student account and profile
         url(r'^account/', include('student_account.urls')),
         url(r'^profile/', include('student_profile.urls')),
+
+        # Company Representative Dashboard
+        url(r'^representative-dashboard/', 'company.views.representative_dashboard', name='representative_dashboard'),
     )
 
     # allow course staff to change to student view of courseware

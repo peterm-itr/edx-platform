@@ -51,6 +51,7 @@ from functools import total_ordering
 
 from certificates.models import GeneratedCertificate
 from course_modes.models import CourseMode
+from company.models import Company
 
 from ratelimitbackend import admin
 
@@ -176,24 +177,6 @@ class UserStanding(models.Model):
     )
     changed_by = models.ForeignKey(User, blank=True)
     standing_last_changed_at = models.DateTimeField(auto_now=True)
-
-class Company(models.Model):
-    """
-    Contains companies users may be assigned to.
-    """
-    class Meta: # pylint: disable=missing-docstring
-        db_table = "company"
-
-    title = models.CharField(blank=True, max_length=255, db_index=True)
-    address = models.TextField(blank=True)
-    real_address = models.TextField(blank=True)
-    inn = models.CharField(blank=True, max_length=255)
-    kpk = models.CharField(blank=True, max_length=255)
-    ceo_name = models.CharField(blank=True, max_length=255)
-    email = models.EmailField(blank=True)
-    phone = models.CharField(blank=True, max_length=255)
-
-
 
 class UserProfile(models.Model):
     """This is where we store all the user demographic fields. We have a

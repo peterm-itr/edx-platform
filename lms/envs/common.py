@@ -38,7 +38,7 @@ from lms.lib.xblock.mixin import LmsBlockMixin
 
 ################################### FEATURES ###################################
 # The display name of the platform to be used in templates/emails/etc.
-PLATFORM_NAME = "Юнитал-М"
+PLATFORM_NAME = u'Юнитал-М'
 CC_MERCHANT_NAME = PLATFORM_NAME
 
 PLATFORM_FACEBOOK_ACCOUNT = "http://www.facebook.com/YourPlatformFacebookAccount"
@@ -278,7 +278,7 @@ FEATURES = {
     'ENABLE_MOBILE_REST_API': False,
 
     # Enable the new dashboard, account, and profile pages
-    'ENABLE_NEW_DASHBOARD': False,
+    'ENABLE_NEW_DASHBOARD': True,
 
     # Enable the combined login/registration form
     'ENABLE_COMBINED_LOGIN_REGISTRATION': False,
@@ -289,11 +289,13 @@ FEATURES = {
     'ALLOW_AUTOMATED_SIGNUPS': False,
 
     # Display demographic data on the analytics tab in the instructor dashboard.
-    'DISPLAY_ANALYTICS_DEMOGRAPHICS': True,
+    'DISPLAY_ANALYTICS_DEMOGRAPHICS': False,
 
     # Enable display of enrollment counts in instructor and legacy analytics dashboard
-    'DISPLAY_ANALYTICS_ENROLLMENTS': True,
+    'DISPLAY_ANALYTICS_ENROLLMENTS': False,
 }
+
+THEME_NAME = 'unital'
 
 # Ignore static asset files on import which match this pattern
 ASSET_IGNORE_REGEX = r"(^\._.*$)|(^\.DS_Store$)|(^.*~$)"
@@ -1419,6 +1421,7 @@ INSTALLED_APPS = (
     'circuit',
     'courseware',
     'student',
+    'company',
 
     'static_template_view',
     'staticbook',
@@ -1574,15 +1577,16 @@ if FEATURES.get('AUTH_USE_CAS'):
 # - 'hidden': to not display the field
 
 REGISTRATION_EXTRA_FIELDS = {
-    'level_of_education': 'optional',
+    'level_of_education': 'hidden',
     'gender': 'optional',
     'year_of_birth': 'optional',
-    'mailing_address': 'optional',
-    'goals': 'optional',
-    'honor_code': 'required',
+    'mailing_address': 'hidden',
+    'goals': 'hidden',
+    'honor_code': 'hidden',
     'terms_of_service': 'hidden',
-    'city': 'hidden',
-    'country': 'hidden',
+    'city': 'optional',
+    'country': 'optional',
+    'phone': 'optional'
 }
 
 ########################## CERTIFICATE NAME ########################
@@ -1876,7 +1880,7 @@ OPENID_DOMAIN_PREFIX = 'openid:'
 ANALYTICS_DATA_URL = ""
 ANALYTICS_DATA_TOKEN = ""
 ANALYTICS_DASHBOARD_URL = ""
-ANALYTICS_DASHBOARD_NAME = PLATFORM_NAME + " Insights"
+ANALYTICS_DASHBOARD_NAME = PLATFORM_NAME + u" Insights"
 
 # REGISTRATION CODES DISPLAY INFORMATION SUBTITUTIONS IN THE INVOICE ATTACHMENT
 INVOICE_CORP_ADDRESS = "Please place your corporate address\nin this configuration"

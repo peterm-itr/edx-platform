@@ -1,0 +1,81 @@
+<%! from django.utils.translation import ugettext as _ %>
+<%namespace name='static' file='/static_content.html'/>
+
+<%inherit file="../main.html" />
+
+<%block name="pagetitle">${_("Representative Dashboard")}</%block>
+
+<%block name="js_extra">
+    <script type="text/javascript" src="${static.url('js/vendor/underscore-min.js')}"></script>
+    <script type="text/javascript" src="${static.url('js/vendor/backbone-min.js')}"></script>
+    <%static:js group='student_account'/>
+</%block>
+
+<%block name="header_extras">
+% for template_name in ["account"]:
+<script type="text/template" id="${template_name}-tpl">
+  <%static:include path="student_account/${template_name}.underscore" />
+</script>
+% endfor
+</%block>
+
+<div class="container dashboard">
+
+    <h1 style="text-align: left;">${_('Representative Dashboard')}</h1>
+    <h2>${_('Company:')} ${company.title}</h2>
+
+    <%def name="percent_data(fraction)">
+        <%
+            letter_grade = 'None'
+            if fraction > 0:
+                letter_grade = 'F'
+                for (grade, cutoff) in ordered_grades:
+                    if fraction >= cutoff:
+                        letter_grade = grade
+                        break
+
+            data_class = "grade_" + letter_grade
+        %>
+        <td class="${data_class}" data-percent="${fraction}">${ "{0:.0f}".format( 100 * fraction ) }</td>
+    </%def>
+
+    % for (course_id, course_data) in courses_data.iteritems():
+
+        % if len(course_data['students']) > 0:
+            <%
+            students = course_data['students']
+            %>
+
+            <div class="grades">
+                <h3>${course_data['course'].display_name}</h3>
+                <table class="grade-table">
+                    <%
+                    templateSummary = students[0]['grades']
+                    %>
+                    <thead>
+                        <tr> <!-- Header Row -->
+                            <th>${_('Student')}</th>
+                            %for section in templateSummary['section_breakdown']:
+                                <th><div class="assignment-label">${section['label']}</div></th>
+                            %endfor
+                            <th><div class="assignment-label">Total</div></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                    % for student in students:
+                        <tr>
+                            <td>${student['real_name']}</td>
+                            % for section in student['grades']['section_breakdown']:
+                                ${percent_data( section['percent'] )}
+                            % endfor
+                            ${percent_data( student['grades']['percent'])}
+                        </tr>
+                    % endfor
+                    </tbody>
+                </table>
+            </div>
+        % endif
+    % endfor
+
+</div>

@@ -66,6 +66,6 @@
       data-feature="level_of_education"
       data-endpoint="${ section_data['get_distribution_url'] }"
     ></div>
-%elif section_data['demographic_message']:
+%elif 'demographic_message' in section_data and section_data['demographic_message']:
     <p><em>${section_data['demographic_message']}</em></p>
 %endif
