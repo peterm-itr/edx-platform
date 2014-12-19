@@ -3,14 +3,14 @@
 
 <%inherit file="../main.html" />
 
-<%block name="pagetitle">${_("Representative Dashboard")}</%block>
+<%block name="pagetitle">${_("Company Progress")}</%block>
 <%block name="headextra">
 <%static:css group='style-company'/>
 </%block>
 
 <div class="container dashboard representative-dashboard">
 
-    <h1>${_('Representative Dashboard')}</h1>
+    <h1>${_('Company Progress')}</h1>
     <h2>${_('Company:')} ${company.title}</h2>
 
     <%def name="percent_data(fraction)">
@@ -66,5 +66,4 @@
             </div>
         % endif
     % endfor
-
 </div>

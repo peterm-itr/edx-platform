@@ -63,6 +63,12 @@ site_status_msg = get_site_status_msg(course_id)
             <a href="${reverse('representative_dashboard')}">${_('Representative Dashboard')}</a>
           </li>
         % endif
+
+        % if user.is_staff:
+          <li class="nav-global-02">
+            <a href="${reverse('staff_dashboard')}">${_('Staff Dashboard')}</a>
+          </li>
+        % endif
       </%block>
     </ol>
     <ol class="user">

@@ -1,0 +1,50 @@
+<%!
+from django.core.urlresolvers import reverse
+from django.utils.translation import ugettext as _
+%>
+<%namespace name='static' file='/static_content.html'/>
+
+<%inherit file="../main.html" />
+
+<%block name="pagetitle">${_("Staff Dashboard")}</%block>
+<%block name="headextra">
+<%static:css group='style-company'/>
+</%block>
+
+<div class="container dashboard staff-dashboard">
+
+    <h1>${_('Staff Dashboard')}</h1>
+
+    <table class="table companies-list">
+        <thead>
+            <tr>
+                <th>${('Company')}</th>
+                <th>${('Representative')}</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        % for company in companies:
+            <tr>
+                <td>${company['title']}</td>
+                <td>
+                    % if company['representative']:
+                        ${company['representative'].name}
+                    % else:
+                        ${_('Not set')}
+                    % endif
+                </td>
+                <td>
+                    <a href="${ reverse('staff_edit_company', args=(company['id'],)) }">${_('Edit')}</a>
+                    <a href="${ reverse('staff_company_progress', args=(company['id'],)) }">${_('View Progress')}</a>
+                </td>
+            </tr>
+        % endfor
+            <tr>
+                <td colspan="3" class="text-right">
+                    <a href="${ reverse('staff_add_company') }">+Add Company</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ObjectDoesNotExist
 
 # Create your models here.
 class Company(models.Model):
@@ -16,3 +17,16 @@ class Company(models.Model):
     ceo_name = models.CharField(blank=True, max_length=255)
     email = models.EmailField(blank=True)
     phone = models.CharField(blank=True, max_length=255)
+
+
+    def get_representative(self):
+        """
+        Gets list of student profiles assigned to the company
+        """
+        representative = None
+        try:
+            representative = self.userprofile_set.get(is_representative__exact=1, user__is_active=1)
+        except ObjectDoesNotExist:
+            pass
+
+        return representative

@@ -1,0 +1,96 @@
+.text-right {
+  text-align: right;
+}
+
+.representative-dashboard, .staff-dashboard {
+  h1 {
+    text-align: left;
+  }
+
+  .grades, .grade-table, .companies-list {
+    margin-top: 1em;
+  }
+
+  .grade-table, .companies-list {
+    border-collapse: collapse;
+    width: 100%;
+
+    td, th {
+      margin: 0;
+      padding: 2px 4px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+
+    td:first-child {
+      text-align: left;
+    }
+  }
+}
+
+.company-edit {
+  h1 {
+    text-align: left;
+    margin: 0 15px;
+  }
+
+  .w50 {
+    width: 47%;
+    margin: 0 15px;
+    float: left;
+  }
+
+  #add-student {
+    margin: -2.5em 0 0.5em 0;
+    float: right;
+  }
+
+  form {
+    .field {
+      padding: 15px 0;
+    }
+    input, textarea {
+      width: 100%;
+    }
+  }
+
+  .students-list {
+    border-collapse: collapse;
+    width: 100%;
+
+    td, th {
+      margin: 0;
+      padding: 2px 4px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+
+    td:first-child {
+      text-align: left;
+    }
+  }
+}
+
+.student-form {
+  .notice {
+    background: #fcc;
+    margin: 0 0 0.5em 0;
+    padding: 0.1em 0.5em;
+  }
+
+  .field {
+    margin-bottom: 1em;
+  }
+  label {
+    width: 150px;
+    float: left;
+    clear: left;
+    display: block;
+  }
+  input, select {
+    width: 250px;
+  }
+  textarea {
+    width: 100%;
+  }
+}

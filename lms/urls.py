@@ -382,7 +382,15 @@ if settings.COURSEWARE_ENABLED:
         url(r'^profile/', include('student_profile.urls')),
 
         # Company Representative Dashboard
-        url(r'^representative-dashboard/', 'company.views.representative_dashboard', name='representative_dashboard'),
+        url(r'^representative-dashboard$', 'company.views.representative_dashboard', name='representative_dashboard'),
+        url(r'^staff-dashboard$', 'company.views.staff_dashboard', name='staff_dashboard'),
+        url(r'^staff-dashboard/company/add$', 'company.views.add_company', name='staff_add_company'),
+        url(r'^staff-dashboard/company/(?P<company_id>[0-9]+)/edit$', 'company.views.edit_company', name='staff_edit_company'),
+        url(r'^staff-dashboard/company/(?P<company_id>[0-9]+)/progress$', 'company.views.company_progress', name='staff_company_progress'),
+        url(r'^staff-dashboard/company/set-representative/(?P<profile_id>[0-9]+)$', 'company.views.set_representative', name='staff_company_set_representative'),
+        url(r'^staff-dashboard/company/(?P<company_id>[0-9]+)/add-profile$', 'company.views.add_profile', name='staff_company_add_profile'),
+        url(r'^staff-dashboard/company/edit-profile/(?P<profile_id>[0-9]+)$', 'company.views.edit_profile', name='staff_company_edit_profile'),
+        url(r'^staff-dashboard/company/remove-profile/(?P<profile_id>[0-9]+)$', 'company.views.remove_profile', name='staff_company_remove_profile'),
     )
 
     # allow course staff to change to student view of courseware

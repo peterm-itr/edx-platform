@@ -1,0 +1,281 @@
+<%!
+from django.core.urlresolvers import reverse
+from django.utils.translation import ugettext as _
+from django_countries import countries
+from student.models import UserProfile
+%>
+<%namespace name='static' file='/static_content.html'/>
+
+<%inherit file="../main.html" />
+
+<%block name="pagetitle">${_("Edit Company")}</%block>
+<%block name="headextra">
+<%static:css group='style-company'/>
+</%block>
+
+<%block name="js_extra">
+  <script type="text/javascript">
+    jQuery(function($) {
+
+        $('#company-form').submit(function(e){
+            if ($.trim($('#company_title').val()) === '') {
+                alert('${_('Company title must be filled')}');
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        $('#add-student').click(function(){
+            $('#student-form').dialog({
+                width: '440px',
+                title: '${_('Add Student')}',
+                open: function(){
+                    var $form = $('#student-form form');
+                    var $notice = $('#student-form .notice');
+
+                    $form.find('[type=submit]').val('${_('Add')}');
+                    $form.find('[type=password]').prop('required', true);
+
+                    $form.find('*[name]').each(function(idx, el){
+                        var $el = $(el);
+                        if ($el.attr('name') !== 'company_id' && $el.attr('name') !== 'csrfmiddlewaretoken') {
+                            $el.val('');
+                        }
+                    });
+
+                    $form.off('submit').on('submit', function(e){
+                        $notice.text('').hide();
+                        e.preventDefault();
+                        $.ajax({
+                            url: $form.attr('action'),
+                            type: 'POST',
+                            data: $form.serialize(),
+                            success: function(data) {
+                                if (data.success) {
+                                    window.location.reload();
+                                } else if (data.value) {
+                                    $notice.text(data.value).show();
+                                }
+                            },
+                            error: function(xhr) {
+                                var resp = JSON.parse(xhr.responseText);
+                                $notice.text(resp.value).show();
+                                $form.find('*[name=' + resp.field + ']').focus();
+                            }
+                        });
+                        return false;
+                    });
+                }
+            });
+        });
+
+        $('.profile-edit').click(function(e){
+            e.preventDefault();
+            var url = $(this).attr('href');
+            $.ajax({
+                url: url,
+                success: function(data) {
+                    $('#student-form').dialog({
+                        width: '440px',
+                        title: '${_('Edit Student')}',
+                        open: function() {
+                            var $form = $('#student-form form');
+                            var $notice = $('#student-form .notice');
+
+                            $form.find('[type=submit]').val('${_('Update')}');
+                            $form.find('[type=password]').prop('required', false);
+
+                            $form.find('*[name]').each(function(idx, el){
+                                var $el = $(el);
+                                if (data[$el.attr('name')]) {
+                                    $el.val(data[$el.attr('name')]);
+                                } else if ($el.attr('name') !== 'csrfmiddlewaretoken'){
+                                    $el.val('');
+                                }
+                            });
+
+                            $form.off('submit').on('submit', function(f){
+                                $notice.text('').hide();
+                                f.preventDefault();
+                                $.ajax({
+                                    url: url,
+                                    type: 'POST',
+                                    data: $form.serialize(),
+                                    success: function(data) {
+                                        if (data.success) {
+                                            window.location.reload();
+                                        } else if (data.value) {
+                                            $notice.text(data.value).show();
+                                        }
+                                    },
+                                    error: function(xhr) {
+                                        var resp = JSON.parse(xhr.responseText);
+                                        $notice.text(resp.value).show();
+                                        $form.find('[name=' + resp.field).focus();
+                                    }
+                                });
+                            });
+                        }
+                    });
+                }
+            });
+        });
+    });
+  </script>
+</%block>
+
+<div class="container dashboard company-edit">
+
+    % if company.id:
+        <h1>${_('Edit Company')}</h1>
+    % else:
+        <h1>${_('Add Company')}</h1>
+    % endif
+
+    <div class="left w50">
+        <h2>${_('Company Info:')}</h2>
+        <form method="POST" id="company-form" action="${reverse('staff_edit_company', args=(company.id or 0,))}">
+            <input type="hidden" name="csrfmiddlewaretoken" value="${ csrf_token }">
+            <input type="hidden" name="company_id" value="${company.id}">
+            <div class="field">
+                <label for="company_title">${_('Company Title')}</label>
+                <input type="text" id="company_title" required="required" value="${company.title}" name="company_title" placeholder="${_('Title')}">
+            </div>
+            <div class="field">
+                <label for="company_address">${_('Address')}</label>
+                <textarea id="company_address" name="company_address" placeholder="${_('Address')}">${company.address}</textarea>
+            </div>
+            <div class="field">
+                <label for="company_real_address">${_('Real Address')}</label>
+                <textarea id="company_real_address" name="company_real_address" placeholder="${_('Real Address')}">${company.real_address}</textarea>
+            </div>
+            <div class="field">
+                <label for="company_inn">${_('INN')}</label>
+                <input type="text" id="company_inn" value="${company.inn}" name="company_inn" placeholder="${_('INN')}">
+            </div>
+            <div class="field">
+                <label for="company_kpk">${_('KPK')}</label>
+                <input type="text" id="company_kpk" value="${company.kpk}" name="company_kpk" placeholder="${_('KPK')}">
+            </div>
+            <div class="field">
+                <label for="company_ceo_name">${_('CEO Name')}</label>
+                <input type="text" id="company_ceo_name" value="${company.ceo_name}" name="company_ceo_name" placeholder="${_('CEO Name')}">
+            </div>
+            <div class="field">
+                <label for="company_email">${_('Email')}</label>
+                <input type="email" id="company_email" value="${company.email}" name="company_email" placeholder="${_('Email')}">
+            </div>
+            <div class="field">
+                <label for="company_phone">${_('Phone')}</label>
+                <input type="text" id="company_phone" value="${company.phone}" name="company_phone" placeholder="${_('Phone')}">
+            </div>
+            % if company.id:
+                <button type="submit">${_('Update')}</button>
+            % else:
+                <button type="submit">${_('Add')}</button>
+            % endif
+        </form>
+    </div>
+
+    % if company.id:
+    <div class="rigth w50">
+        <div class="representative">
+            <h2>${_('Representative:')}</h2>
+            <p>
+                % if representative:
+                    ${representative.name}
+                % else:
+                    ${_('Not set')}
+                % endif
+            </p>
+        </div>
+        <div class="students">
+            <h2>${_('Students:')}</h2>
+            <p class="text-right"><button type="button" id="add-student">${_('Add Student')}</button></p>
+            <table class="students-list">
+                <thead>
+                    <tr>
+                        <th>${_('Email')}</th>
+                        <th>${_('Name')}</th>
+                        <th>${_('Phone')}</th>
+                        <th><!-- --></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    % for student in students:
+                        <tr>
+                            <td>${student.user.email}</td>
+                            <td>${student.name}</td>
+                            <td>${student.phone}</td>
+                            <td>
+                                <a href="${reverse('staff_company_edit_profile', args=(student.id,))}" class="profile-edit">Edit</a>
+                                % if not student.is_representative:
+                                    <a href="${reverse('staff_company_set_representative', args=(student.id,))}">Set Representative</a>
+                                    <a href="${reverse('staff_company_remove_profile', args=(student.id,))}">Remove</a>
+                                % endif
+                            </td>
+                        </tr>
+                    % endfor
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="student-form" style="display: none;">
+        <p style="display: none;" class="notice"></p>
+        <form class="student-form" method="POST" action="${reverse('staff_company_add_profile', args=(company.id,))}">
+            <input type="hidden" name="csrfmiddlewaretoken" value="${ csrf_token }">
+            <input type="hidden" name="company_id" value="${ company.id }">
+            <div class="field">
+                <label for="student_email">${_('Email')}</label>
+                <input type="email" required="" id="student_email" name="email" placeholder="${_('e.g. john@example.com')}">
+            </div>
+            <div class="field">
+                <label for="student_full_name">${_('Full Name')}</label>
+                <input type="text" required="" id="student_full_name" name="name" placeholder="${_('e.g. John Smith')}">
+            </div>
+            <div class="field">
+                <label for="student_username">${_('Public Username')}</label>
+                <input type="text" required="" id="student_username" name="username" placeholder="${_('e.g. JohnSmith')}">
+            </div>
+            <div class="field">
+                <label for="student_password">${_('Password')}</label>
+                <input required="" type="password" id="student_password" name="password">
+            </div>
+            <div class="field">
+                <label for="student_phone">${_('Phone')}</label>
+                <input type="text" id="student_phone" name="phone" placeholder="${_('e.g. +74951234567')}">
+            </div>
+            <div class="field">
+                <label for="student_city">${_('City')}</label>
+                <input type="text" id="student_city" name="city" placeholder="${_('e.g. Moscow')}">
+            </div>
+            <div class="field">
+                <label for="student_country">${_('Country')}</label>
+                <select id="student_country" name="country">
+                    <option value="">--</option>
+                    %for code, country_name in sorted(countries.countries, key=lambda (__, name): unicode(name)):
+                    <option value="${code}">${ unicode(country_name) }</option>
+                    %endfor
+                </select>
+            </div>
+            <div class="field">
+                <label for="student_gender">${_('Gender')}</label>
+                <select id="student_gender" name="gender">
+                    <option value="">--</option>
+                    %for code, gender in UserProfile.GENDER_CHOICES:
+                    <option value="${code}">${_(gender)}</option>
+                    %endfor
+                </select>
+            </div>
+            <div class="field">
+                <label for="student_address">${_('Mailing Address')}</label>
+                <textarea rows="3" id="student_address" name="mailing_address"></textarea>
+            </div>
+            <div class="field text-right">
+                <input type="submit" value="${_('Add Student')}">
+            </div>
+        </form>
+    </div>
+    % endif
+</div>

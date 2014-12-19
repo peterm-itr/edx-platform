@@ -17,6 +17,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import password_reset_confirm
 from django.contrib import messages
 from django.core.context_processors import csrf
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.core.validators import validate_email, validate_slug, ValidationError
@@ -1352,6 +1353,14 @@ def _do_create_account(post_vars, extended_profile=None):
 
         profile.is_representative = True
         profile.company = company
+
+    if 'company_id' in post_vars:
+        try:
+            company = Company.objects.get(id=post_vars['company_id'])
+            profile.company = company
+        except (KeyError, ObjectDoesNotExist):
+            pass
+
 
     # add any extended profile information in the denormalized 'meta' field in the profile
     if extended_profile:

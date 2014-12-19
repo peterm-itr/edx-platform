@@ -1162,6 +1162,13 @@ PIPELINE_CSS = {
         ],
         'output_filename': 'css/lms-style-xmodule-annotations.css',
     },
+    'style-company': {
+        'source_filenames': [
+            'sass/company.css',
+            'css/vendor/ui-lightness/jquery-ui-1.8.22.custom.css',
+        ],
+        'output_filename': 'css/lms-style-company.css',
+    },
 }
 
 
