@@ -1,0 +1,106 @@
+{% load cms_tags menu_tags i18n sekizai_tags %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Юнитал-М{% endblock title %}</title>
+    {% render_block "css" %}
+    <style type="text/css">
+        .nav {
+            padding-left: 0;
+        }
+        .nav li {
+            display: inline;
+            list-style-type: none;
+            padding-right: 20px;
+        }
+    </style>
+    <link rel="stylesheet" href="{{ STATIC_URL }}lms/sass/application.css" />
+    <link rel="stylesheet" href="{{ STATIC_URL }}lms/sass/application-extend1.css" />
+    <link rel="stylesheet" href="{{ STATIC_URL }}lms/sass/application-extend2.css" />
+    <!--<link rel="stylesheet" href="{{ STATIC_URL }}lms/sass/ie.css" />-->
+</head>
+<body>
+{% cms_toolbar %}
+<div class="window-wrap">
+    <header class="global " aria-label="Global Navigation">
+        <nav>
+            <h1 class="logo">
+                <a href="/">
+                    <img src="{{ STATIC_URL }}unital/images/unital.png" height="74" alt="Юнитал-М">
+                </a>
+            </h1>
+
+            {% if user.is_authenticated %}
+                <ol class="left nav-global authenticated">
+                    <li class="nav-global-01">
+                        <a href="/courses">{% trans 'Find Courses' %}</a>
+                    </li>
+                    {% if user.is_staff %}
+                        <li class="nav-global-02">
+                            <a href="/staff-dashboard">{% trans 'Staff Dashboard' %}</a>
+                        </li>
+                    {% endif %}
+                    {% if user.profile.is_representative %}
+                        <li class="nav-global-02">
+                            <a href="/representative-dashboard">{% trans 'Representative Dashboard' %}</a>
+                        </li>
+                    {% endif %}
+                </ol>
+            {% else %}
+                <ol class="left nav-global">
+                    <li class="nav-global-04">
+                        <a class="cta cta-register" href="/register">{% trans 'Register Now' %}</a>
+                    </li>
+                </ol>
+            {% endif %}
+
+            {% if user.is_authenticated %}
+                <ol class="user">
+                    <li class="primary">
+                        <a href="/dashboard" class="user-link">
+                            <span class="avatar"></span>
+                            <span class="sr">{% trans 'Dashboard for:' %} </span> {{ user.username }}
+                        </a>
+                    </li>
+                    <li class="primary">
+                        <a href="#" class="dropdown" aria-haspopup="true" aria-expanded="false"><span class="sr">{% trans 'More options dropdown' %}</span> ▾</a>
+                        <ul class="dropdown-menu" aria-label="More Options" role="menu">
+                            <li><a href="/p/faq">{% trans 'Help' %}</a></li>
+                            <li><a href="/logout" role="menuitem">{% trans 'Log Out' %}</a></li>
+                        </ul>
+                    </li>
+                </ol>
+            {% else %}
+                <ol class="right nav-courseware user">
+                    <li class="nav-courseware-01">
+                        <a class="cta cta-login" href="/login">{% trans 'Log in' %}</a>
+                    </li>
+                </ol>
+            {% endif %}
+        </nav>
+    </header>
+    <div class="content-wrapper" id="content">
+        <section class="container about">
+            {% block content %}
+                {% placeholder "content" or %}There is no content.{% endplaceholder %}
+            {% endblock content %}
+        </section>
+    </div>
+    <div class="wrapper-footer">
+        <footer>
+            <div class="colophon">
+                <nav class="nav-colophon">
+                    <ol>
+                        {% show_menu 1 %}
+                    </ol>
+                </nav>
+            </div>
+            <div class="references">
+                <span>{% trans 'Built on' %} <a href="http://code.edx.org">OpenEdX</a>.</span>
+            </div>
+        </footer>
+    </div>
+</div>
+{% render_block "js" %}
+</body>
+</html>
