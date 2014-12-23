@@ -9,7 +9,6 @@ django-cms==3.0.7
 django-countries==3.0.1
 django-mptt==0.6.1
 django-reversion==1.6.6
-django-sass==0.1
 django-sekizai==0.7
 djangocms-admin-style==0.2.4
 djangocms-column==1.5
