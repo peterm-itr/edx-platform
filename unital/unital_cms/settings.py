@@ -257,7 +257,7 @@ DATABASES = {
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-        'KEY_FUNCTION': 'util.memcache.safe_key',
+        'KEY_FUNCTION': 'unital_cms.memcache.safe_key',
         'KEY_PREFIX': 'default',
         'LOCATION': [
                 'localhost:11211'
@@ -270,7 +270,7 @@ CACHES = {
     },
     'general': {
         'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-        "KEY_FUNCTION": 'util.memcache.safe_key',
+        'KEY_FUNCTION': 'unital_cms.memcache.safe_key',
         'KEY_PREFIX': 'general',
         'LOCATION': [
             'localhost:11211'
