@@ -9,7 +9,7 @@ DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-    # ('Your Name', 'your_email@example.com'),
+    ('Peter Markushin', 'p.markushin@itransition.com'),
 )
 
 MANAGERS = ADMINS
@@ -18,7 +18,7 @@ MANAGERS = ADMINS
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.4/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['178.62.29.194', '127.0.0.1']
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -247,7 +247,42 @@ CMS_PERMISSION = True
 
 CMS_PLACEHOLDER_CONF = {}
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+
 DATABASES = {
     'default':
         {'ENGINE': 'django.db.backends.mysql', 'NAME': 'edxapp', 'HOST': 'localhost', 'USER': 'root', 'PASSWORD': '', 'PORT': ''}
 }
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'KEY_FUNCTION': 'util.memcache.safe_key',
+        'KEY_PREFIX': 'default',
+        'LOCATION': [
+                'localhost:11211'
+        ],
+        'VERSION': '1'
+    },
+    'loc_cache': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'edx_location_mem_cache',
+    },
+    'general': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        "KEY_FUNCTION": 'util.memcache.safe_key',
+        'KEY_PREFIX': 'general',
+        'LOCATION': [
+            'localhost:11211'
+        ]
+    },
+}
+
+USE_X_FORWARDED_HOST = True
+USE_ETAGS = True
+
+DATE_FORMAT = 'd.m.Y'
+TIME_FORMAT = 'G:i'
+DATETIME_FORMAT = DATE_FORMAT + ' ' + TIME_FORMAT
+SHORT_DATE_FORMAT = DATE_FORMAT
+SHORT_DATETIME_FORMAT = DATETIME_FORMAT
