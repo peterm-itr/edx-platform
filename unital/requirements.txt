@@ -11,6 +11,7 @@ django-countries==3.0.1
 django-mptt==0.6.1
 django-reversion==1.6.6
 django-sekizai==0.7
+django-ratelimit-backend==0.6.2
 djangocms-admin-style==0.2.4
 djangocms-column==1.5
 djangocms-file==0.1
