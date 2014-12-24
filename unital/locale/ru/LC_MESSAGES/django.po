@@ -1,0 +1,844 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Unital CMS\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-12-24 14:02+0300\n"
+"PO-Revision-Date: 2014-12-24 14:36+0300\n"
+"Last-Translator: Peter Markushin <p.markushin@itransition.com>\n"
+"Language-Team: Russian <LL@li.org>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n"
+"%100>=20) ? 1 : 2);\n"
+"X-Generator: Poedit 1.7.1\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+
+#: static1/js/vendor/mathjax-MathJax-c9db6ac/docs/source/mjtheme/layout.html:23
+#: static1/lms/xmodule_js/common_static/js/vendor/mathjax-MathJax-c9db6ac/docs/source/mjtheme/layout.html:23
+#: static1/xmodule_js/common_static/js/vendor/mathjax-MathJax-c9db6ac/docs/source/mjtheme/layout.html:23
+msgid "Navigation"
+msgstr "Навигация"
+
+#: static1/js/vendor/mathjax-MathJax-c9db6ac/docs/source/mjtheme/layout.html:123
+#: static1/lms/xmodule_js/common_static/js/vendor/mathjax-MathJax-c9db6ac/docs/source/mjtheme/layout.html:123
+#: static1/xmodule_js/common_static/js/vendor/mathjax-MathJax-c9db6ac/docs/source/mjtheme/layout.html:123
+msgid "About these documents"
+msgstr "Об этих документах"
+
+#: static1/js/vendor/mathjax-MathJax-c9db6ac/docs/source/mjtheme/layout.html:126
+#: static1/lms/xmodule_js/common_static/js/vendor/mathjax-MathJax-c9db6ac/docs/source/mjtheme/layout.html:126
+#: static1/xmodule_js/common_static/js/vendor/mathjax-MathJax-c9db6ac/docs/source/mjtheme/layout.html:126
+msgid "Index"
+msgstr "Содержание"
+
+#: static1/js/vendor/mathjax-MathJax-c9db6ac/docs/source/mjtheme/layout.html:129
+#: static1/lms/templates/wiki/plugins/attachments/index.html:40
+#: static1/lms/xmodule_js/common_static/js/vendor/mathjax-MathJax-c9db6ac/docs/source/mjtheme/layout.html:129
+#: static1/templates/wiki/plugins/attachments/index.html:40
+#: static1/xmodule_js/common_static/js/vendor/mathjax-MathJax-c9db6ac/docs/source/mjtheme/layout.html:129
+msgid "Search"
+msgstr "Поиск"
+
+#: static1/js/vendor/mathjax-MathJax-c9db6ac/docs/source/mjtheme/layout.html:132
+#: static1/lms/xmodule_js/common_static/js/vendor/mathjax-MathJax-c9db6ac/docs/source/mjtheme/layout.html:132
+#: static1/xmodule_js/common_static/js/vendor/mathjax-MathJax-c9db6ac/docs/source/mjtheme/layout.html:132
+msgid "Copyright"
+msgstr "Copyright"
+
+#: static1/lms/templates/main_django.html:33 static1/templates/main_django.html:33
+msgid "Skip to this view's content"
+msgstr "Перейти к содержимому"
+
+#: static1/lms/templates/dashboard/_dashboard_refund.html:27 static1/lms/templates/dashboard/support.html:8
+#: static1/templates/dashboard/_dashboard_refund.html:27 static1/templates/dashboard/support.html:8
+msgid "Manual Refund"
+msgstr "Возврат через оператора"
+
+#: static1/lms/templates/dashboard/_dashboard_refund.html:46
+#: static1/templates/dashboard/_dashboard_refund.html:46
+msgid "About to refund this order:"
+msgstr "Чтобы вернуть это заказ:"
+
+#: static1/lms/templates/dashboard/_dashboard_refund.html:49
+#: static1/templates/dashboard/_dashboard_refund.html:49
+msgid "Order Id:"
+msgstr "Номер заказа:"
+
+#: static1/lms/templates/dashboard/_dashboard_refund.html:52
+#: static1/templates/dashboard/_dashboard_refund.html:52
+msgid "Enrollment:"
+msgstr "Запись на курс"
+
+#: static1/lms/templates/dashboard/_dashboard_refund.html:52
+#: static1/templates/dashboard/_dashboard_refund.html:52
+msgid "enrolled"
+msgstr "Вы записаны"
+
+#: static1/lms/templates/dashboard/_dashboard_refund.html:52
+#: static1/templates/dashboard/_dashboard_refund.html:52
+msgid "unenrolled"
+msgstr "Вы отчислены"
+
+#: static1/lms/templates/dashboard/_dashboard_refund.html:55
+#: static1/templates/dashboard/_dashboard_refund.html:55
+msgid "Cost:"
+msgstr "Стоимость:"
+
+#: static1/lms/templates/dashboard/_dashboard_refund.html:58
+#: static1/templates/dashboard/_dashboard_refund.html:58
+msgid "CertificateItem Status:"
+msgstr "Статус сертификата:"
+
+#: static1/lms/templates/dashboard/_dashboard_refund.html:61
+#: static1/templates/dashboard/_dashboard_refund.html:61
+msgid "Order Status:"
+msgstr "Статус заказа:"
+
+#: static1/lms/templates/dashboard/_dashboard_refund.html:64
+#: static1/templates/dashboard/_dashboard_refund.html:64
+msgid "Fulfilled Time:"
+msgstr "Время выполнения:"
+
+#: static1/lms/templates/dashboard/_dashboard_refund.html:67
+#: static1/templates/dashboard/_dashboard_refund.html:67
+msgid "Refund Request Time:"
+msgstr "Время запроса о возврате средств:"
+
+#: static1/lms/templates/registration/password_reset_complete.html:5
+#: static1/lms/templates/registration/password_reset_complete.html:39
+#: static1/templates/registration/password_reset_complete.html:5
+#: static1/templates/registration/password_reset_complete.html:39
+msgid "Your Password Reset is Complete"
+msgstr "Сброс пароля выполнен"
+
+#: static1/lms/templates/registration/password_reset_complete.html:48
+#: static1/templates/registration/password_reset_complete.html:48
+#, python-format
+msgid ""
+"\n"
+"      Your password has been set.  You may go ahead and %(link_start)slog in%(link_end)s now.\n"
+"      "
+msgstr ""
+"\n"
+"      Ваш пароль сохранён. Теперь вы можете %(link_start)sвойти на сайт%(link_end)s.\n"
+"      "
+
+#: static1/lms/templates/registration/password_reset_confirm.html:6
+#: static1/templates/registration/password_reset_confirm.html:6
+#, python-format
+msgid ""
+"\n"
+"      Reset Your %(platform_name)s Password\n"
+"  "
+msgstr ""
+"\n"
+"      Сбросить ваш пароль для %(platform_name)s\n"
+"  "
+
+#: static1/lms/templates/registration/password_reset_confirm.html:43
+#: static1/templates/registration/password_reset_confirm.html:43
+#, python-format
+msgid ""
+"\n"
+"          Reset Your %(platform_name)s Password\n"
+"          "
+msgstr ""
+"\n"
+"         Сбросить ваш пароль для %(platform_name)s\n"
+"          "
+
+#: static1/lms/templates/registration/password_reset_confirm.html:55
+#: static1/templates/registration/password_reset_confirm.html:55
+msgid "Password Reset Form"
+msgstr "Форма смены пароля"
+
+#: static1/lms/templates/registration/password_reset_confirm.html:62
+#: static1/templates/registration/password_reset_confirm.html:62
+#, python-format
+msgid ""
+"\n"
+"                We're sorry, %(platform_name)s enrollment is not available in your region\n"
+"            "
+msgstr ""
+"\n"
+"               Приносим извинения, но регистрация в %(platform_name)s из вашего региона невозможна.\n"
+"            "
+
+#: static1/lms/templates/registration/password_reset_confirm.html:73
+#: static1/templates/registration/password_reset_confirm.html:73
+msgid "The following errors occurred while processing your registration: "
+msgstr "Во время обработки вашей заявки на регистрацию возникли следующие ошибки:"
+
+#: static1/lms/templates/registration/password_reset_confirm.html:78
+#: static1/templates/registration/password_reset_confirm.html:78
+msgid "You must complete all fields."
+msgstr "Вы должны заполнить все поля."
+
+#: static1/lms/templates/registration/password_reset_confirm.html:79
+#: static1/templates/registration/password_reset_confirm.html:79
+msgid "The two password fields didn't match."
+msgstr "Введённые пароли не совпадают."
+
+#: static1/lms/templates/registration/password_reset_confirm.html:85
+#: static1/templates/registration/password_reset_confirm.html:85
+msgid "We're sorry, our systems seem to be having trouble processing your password reset"
+msgstr "К сожалению, у нашей системы возникли сложности со сбросом Вашего пароля"
+
+#: static1/lms/templates/registration/password_reset_confirm.html:87
+#: static1/templates/registration/password_reset_confirm.html:87
+#, python-format
+msgid ""
+"\n"
+"                Someone has been made aware of this issue. Please try again shortly. Please "
+"%(start_link)scontact us%(end_link)s about any concerns you have.\n"
+"            "
+msgstr ""
+"\n"
+"                Об этой проблеме уже было сообщено администрации. Пожалуйста, попробуйте ещё раз через "
+"несколько минут. %(start_link)sСвяжитесь с нами%(end_link)s, если у вас возникнут какие-либо вопросы или "
+"затруднения.\n"
+"            "
+
+#: static1/lms/templates/registration/password_reset_confirm.html:94
+#: static1/templates/registration/password_reset_confirm.html:94
+msgid ""
+"Please enter your new password twice so we can verify you typed it in correctly. <br /> Required fields "
+"are noted by <strong class=\"indicator\">bold text and an asterisk (*)</strong>."
+msgstr ""
+"Пожалуйста, введите свой новый пароль дважды во избежание опечаток. <br /> Обязательные для заполнения "
+"поля отмечены <strong class=\"indicator\">жирным шрифтом и звёздочкой (*)</strong>."
+
+#: static1/lms/templates/registration/password_reset_confirm.html:98
+#: static1/templates/registration/password_reset_confirm.html:98
+msgid "Required Information"
+msgstr "Необходимая информация"
+
+#: static1/lms/templates/registration/password_reset_confirm.html:102
+#: static1/templates/registration/password_reset_confirm.html:102
+msgid "Your New Password"
+msgstr "Ваш новый пароль"
+
+#: static1/lms/templates/registration/password_reset_confirm.html:106
+#: static1/templates/registration/password_reset_confirm.html:106
+msgid "Your New Password Again"
+msgstr "Ваш новый пароль, ещё раз"
+
+#: static1/lms/templates/registration/password_reset_confirm.html:113
+#: static1/templates/registration/password_reset_confirm.html:113
+msgid "Change My Password"
+msgstr "Сменить пароль"
+
+#: static1/lms/templates/registration/password_reset_confirm.html:120
+#: static1/templates/registration/password_reset_confirm.html:120
+msgid "Your Password Reset Was Unsuccessful"
+msgstr "Не удалось сбросить пароль"
+
+#: static1/lms/templates/registration/password_reset_confirm.html:123
+#: static1/templates/registration/password_reset_confirm.html:123
+#, python-format
+msgid ""
+"\n"
+"            The password reset link was invalid, possibly because the link has already been used.  Please "
+"return to the %(start_link)slogin page%(end_link)s and start the password reset process again.\n"
+"        "
+msgstr ""
+"\n"
+"            Ссылка для сброса пароля недействительна. Скорее всего, по ней  уже переходили ранее.  "
+"Пожалуйста, вернитесь на %(start_link)sстраницу входа%(end_link)s и заново начните процесс сброса пароля.\n"
+"        "
+
+#: static1/lms/templates/registration/password_reset_confirm.html:133
+#: static1/templates/registration/password_reset_confirm.html:133
+msgid "Password Reset Help"
+msgstr "Помощь со сбросом пароля"
+
+#: static1/lms/templates/registration/password_reset_confirm.html:137
+#: static1/templates/registration/password_reset_confirm.html:137
+msgid "Need Help?"
+msgstr "Нужна помощь?"
+
+#: static1/lms/templates/registration/password_reset_confirm.html:139
+#: static1/templates/registration/password_reset_confirm.html:139
+#, python-format
+msgid ""
+"\n"
+"              View our %(start_link)shelp section for contact information and answers to commonly asked "
+"questions%(end_link)s\n"
+"          "
+msgstr ""
+"\n"
+"              Посетите наш %(start_link)sраздел помощи%(end_link)s, чтобы просмотреть контактные данные и "
+"ответы на часто задаваемые вопросы\n"
+"          "
+
+#: static1/lms/templates/registration/password_reset_email.html:2
+#: static1/templates/registration/password_reset_email.html:2
+msgid "You're receiving this e-mail because you requested a password reset for your user account at edx.org."
+msgstr "Вы получили это сообщение, потому что запросили сброс пароля для вашей учётной записи на edx.org."
+
+#: static1/lms/templates/registration/password_reset_email.html:4
+#: static1/templates/registration/password_reset_email.html:4
+msgid "Please go to the following page and choose a new password:"
+msgstr "Пожалуйста, перейдите на следующую страницу и выберите новый пароль:"
+
+#: static1/lms/templates/registration/password_reset_email.html:9
+#: static1/templates/registration/password_reset_email.html:9
+msgid ""
+"If you didn't request this change, you can disregard this email - we have not yet reset your password."
+msgstr ""
+"Если Вы не подавали заявку на смену пароля, Вы можете не обращать внимания на это сообщение - Ваш пароль "
+"еще не был изменён."
+
+#: static1/lms/templates/registration/password_reset_email.html:11
+#: static1/templates/registration/password_reset_email.html:11
+msgid "Thanks for using our site!"
+msgstr "Спасибо за использование нашего сайта!"
+
+#: static1/lms/templates/registration/password_reset_email.html:13
+#: static1/templates/registration/password_reset_email.html:13
+msgid "The edX Team"
+msgstr "Команда edX"
+
+#: static1/lms/templates/wiki/article.html:32 static1/templates/wiki/article.html:32
+msgid "Last modified:"
+msgstr "Последнее изменение:"
+
+#: static1/lms/templates/wiki/article.html:38 static1/templates/wiki/article.html:38
+msgid "See all children"
+msgstr "Просмотреть всех потомков"
+
+#: static1/lms/templates/wiki/article.html:49 static1/templates/wiki/article.html:49
+msgid "This article was last modified:"
+msgstr "Последние изменения были внесены в эту статью:"
+
+#: static1/lms/templates/wiki/base.html:4 static1/templates/wiki/base.html:4
+msgid "Wiki"
+msgstr "Вики"
+
+#: static1/lms/templates/wiki/create.html:5 static1/lms/templates/wiki/create.html:30
+#: static1/templates/wiki/create.html:5 static1/templates/wiki/create.html:30
+msgid "Add new article"
+msgstr "Добавить новую статью"
+
+#: static1/lms/templates/wiki/create.html:37 static1/templates/wiki/create.html:37
+msgid "Create article"
+msgstr "Создать статью"
+
+#: static1/lms/templates/wiki/create.html:42 static1/lms/templates/wiki/delete.html:13
+#: static1/lms/templates/wiki/delete.html:54 static1/templates/wiki/create.html:42
+#: static1/templates/wiki/delete.html:13 static1/templates/wiki/delete.html:54
+msgid "Go back"
+msgstr "Назад"
+
+#: static1/lms/templates/wiki/delete.html:5 static1/lms/templates/wiki/delete.html:50
+#: static1/lms/templates/wiki/edit.html:42 static1/templates/wiki/delete.html:5
+#: static1/templates/wiki/delete.html:50 static1/templates/wiki/edit.html:42
+msgid "Delete article"
+msgstr "Удалить статью"
+
+#: static1/lms/templates/wiki/delete.html:9 static1/lms/templates/wiki/plugins/attachments/index.html:92
+#: static1/templates/wiki/delete.html:9 static1/templates/wiki/plugins/attachments/index.html:92
+msgid "Delete"
+msgstr "Удалить"
+
+#: static1/lms/templates/wiki/delete.html:12 static1/templates/wiki/delete.html:12
+msgid "You cannot delete a root article."
+msgstr "Вы не можете удалить корневую статью."
+
+#: static1/lms/templates/wiki/delete.html:18 static1/templates/wiki/delete.html:18
+msgid ""
+"You cannot delete this article because you do not have permission to delete articles with children. Try to "
+"remove the children manually one-by-one."
+msgstr ""
+"Вы не можете удалить эту статью, потому что у вас нет прав удалять статьи, связанные с дочерними. "
+"Попробуйте последовательно вручную удалить дочерние статьи."
+
+#: static1/lms/templates/wiki/delete.html:24 static1/templates/wiki/delete.html:24
+msgid ""
+"You are deleting an article. This means that its children will be deleted as well. If you choose to purge, "
+"children will also be purged!"
+msgstr ""
+"Вы удаляете статью. Это значит, что дочерние статьи также будут удалены. Если вы выберите очистку, "
+"дочерние статьи также будут очищены!"
+
+#: static1/lms/templates/wiki/delete.html:26 static1/templates/wiki/delete.html:26
+msgid "Articles that will be deleted"
+msgstr "Статьи, которые будут удалены:"
+
+#: static1/lms/templates/wiki/delete.html:32 static1/templates/wiki/delete.html:32
+msgid "...and more!"
+msgstr "...и многое другое!"
+
+#: static1/lms/templates/wiki/delete.html:40 static1/templates/wiki/delete.html:40
+msgid "You are deleting an article. Please confirm."
+msgstr "Вы собираетесь удалить статью. Пожалуйста, подтвердите."
+
+#: static1/lms/templates/wiki/edit.html:5 static1/templates/wiki/edit.html:5
+msgid "Edit"
+msgstr "Редактировать"
+
+#: static1/lms/templates/wiki/edit.html:29 static1/lms/templates/wiki/edit.html:61
+#: static1/templates/wiki/edit.html:29 static1/templates/wiki/edit.html:61
+msgid "Save changes"
+msgstr "Сохранить изменения"
+
+#: static1/lms/templates/wiki/edit.html:37 static1/templates/wiki/edit.html:37
+msgid "Preview"
+msgstr "Предварительный просмотр"
+
+#: static1/lms/templates/wiki/edit.html:48 static1/lms/templates/wiki/history.html:204
+#: static1/lms/templates/wiki/history.html:235 static1/lms/templates/wiki/includes/cheatsheet.html:4
+#: static1/templates/wiki/edit.html:48 static1/templates/wiki/history.html:204
+#: static1/templates/wiki/history.html:235 static1/templates/wiki/includes/cheatsheet.html:4
+msgid "Close"
+msgstr "Закрыть"
+
+#: static1/lms/templates/wiki/edit.html:51 static1/templates/wiki/edit.html:51
+msgid "Wiki Preview"
+msgstr "Предварительный просмотр Вики"
+
+#: static1/lms/templates/wiki/edit.html:51 static1/lms/templates/wiki/history.html:207
+#: static1/lms/templates/wiki/history.html:238 static1/lms/templates/wiki/includes/cheatsheet.html:7
+#: static1/templates/wiki/edit.html:51 static1/templates/wiki/history.html:207
+#: static1/templates/wiki/history.html:238 static1/templates/wiki/includes/cheatsheet.html:7
+msgid "window open"
+msgstr "окно открыто"
+
+#: static1/lms/templates/wiki/edit.html:66 static1/templates/wiki/edit.html:66
+msgid "Back to editor"
+msgstr "Вернуться к редактору"
+
+#: static1/lms/templates/wiki/history.html:5 static1/templates/wiki/history.html:5
+msgid "History"
+msgstr "История"
+
+#: static1/lms/templates/wiki/history.html:95 static1/templates/wiki/history.html:95
+msgid ""
+"Click each revision to see a list of edited lines. Click the Preview button to see how the article looked "
+"at this stage. At the bottom of this page, you can change to a particular revision or merge an old "
+"revision with the current one."
+msgstr ""
+"При нажатии на каждую версию открывается список изменённых строк. Нажмите «Предварительный просмотр», "
+"чтобы увидеть текущий вид статьи. Внизу страницы вы можете изменить конкретную версию или слить старую с "
+"текущей."
+
+#: static1/lms/templates/wiki/history.html:114 static1/templates/wiki/history.html:114
+msgid "(no log message)"
+msgstr "(нет лог-сообщений)"
+
+#: static1/lms/templates/wiki/history.html:134 static1/templates/wiki/history.html:134
+msgid "Preview this revision"
+msgstr "Предварительный просмотр версии"
+
+#: static1/lms/templates/wiki/history.html:153 static1/templates/wiki/history.html:153
+msgid "Auto log:"
+msgstr "Автоматический журнал:"
+
+#: static1/lms/templates/wiki/history.html:161 static1/templates/wiki/history.html:161
+msgid "Change"
+msgstr "Изменение"
+
+#: static1/lms/templates/wiki/history.html:184 static1/lms/templates/wiki/history.html:189
+#: static1/templates/wiki/history.html:184 static1/templates/wiki/history.html:189
+msgid "Merge selected with current..."
+msgstr "Слить выбранное с текущим..."
+
+#: static1/lms/templates/wiki/history.html:194 static1/templates/wiki/history.html:194
+msgid "Switch to selected version"
+msgstr "Переключиться на выбранную версию"
+
+#: static1/lms/templates/wiki/history.html:207 static1/templates/wiki/history.html:207
+msgid "Wiki Revision Preview"
+msgstr "Предварительный просмотр версии страницы Вики"
+
+#: static1/lms/templates/wiki/history.html:216 static1/lms/templates/wiki/history.html:251
+#: static1/templates/wiki/history.html:216 static1/templates/wiki/history.html:251
+msgid "Back to history view"
+msgstr "Вернуться к истории просмотра"
+
+#: static1/lms/templates/wiki/history.html:221 static1/lms/templates/wiki/history.html:226
+#: static1/templates/wiki/history.html:221 static1/templates/wiki/history.html:226
+msgid "Switch to this version"
+msgstr "Переключиться на эту версию"
+
+#: static1/lms/templates/wiki/history.html:238 static1/templates/wiki/history.html:238
+msgid "Merge Revision"
+msgstr "Слить версии"
+
+#: static1/lms/templates/wiki/history.html:242 static1/templates/wiki/history.html:242
+msgid "Merge with current"
+msgstr "Слить с текущей версией"
+
+#: static1/lms/templates/wiki/history.html:243 static1/templates/wiki/history.html:243
+msgid ""
+"When you merge a revision with the current, all data will be retained from both versions and merged at its "
+"approximate location from each revision."
+msgstr ""
+"При сливании исправленной и текущей версий, исправления обоих версий будут объединены на их "
+"приблизительном местоположении."
+
+#: static1/lms/templates/wiki/history.html:243 static1/templates/wiki/history.html:243
+msgid "After this, it's important to do a manual review."
+msgstr "После этого важно сделать ручную проверку."
+
+#: static1/lms/templates/wiki/history.html:256 static1/lms/templates/wiki/history.html:261
+#: static1/templates/wiki/history.html:256 static1/templates/wiki/history.html:261
+msgid "Create new merged version"
+msgstr "Создать новую объединенную версию"
+
+#: static1/lms/templates/wiki/preview_inline.html:13 static1/templates/wiki/preview_inline.html:13
+msgid "Previewing revision:"
+msgstr "Предварительный просмотр версии:"
+
+#: static1/lms/templates/wiki/preview_inline.html:20 static1/templates/wiki/preview_inline.html:20
+msgid "Previewing a merge between two revisions:"
+msgstr "Предварительный просмотр двух слитых версий:"
+
+#: static1/lms/templates/wiki/preview_inline.html:32 static1/templates/wiki/preview_inline.html:32
+msgid "This revision has been deleted."
+msgstr "Эта версия была удалена."
+
+#: static1/lms/templates/wiki/preview_inline.html:33 static1/templates/wiki/preview_inline.html:33
+msgid "Restoring to this revision will mark the article as deleted."
+msgstr "Если восстановить эту версию, статья будет помечена как удалённая."
+
+#: static1/lms/templates/wiki/includes/anonymous_blocked.html:7
+#: static1/templates/wiki/includes/anonymous_blocked.html:7
+#, python-format
+msgid ""
+"\n"
+"  You need to <a href=\"%(login_url)s\">log in</a> or <a href=\"%(signup_url)s\">sign up</a> to use this "
+"function.\n"
+"  "
+msgstr ""
+"\n"
+"Чтобы воспользоваться этой функцией, Вам нужно <a href=\"%(login_url)s\">войти</a> или <a href="
+"\"%(signup_url)s\">зарегистрироваться</a>."
+
+#: static1/lms/templates/wiki/includes/anonymous_blocked.html:11
+#: static1/templates/wiki/includes/anonymous_blocked.html:11
+msgid "You need to log in or sign up to use this function."
+msgstr "Вам нужно войти или зарегистрироваться для использования этой функции."
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:7 static1/templates/wiki/includes/cheatsheet.html:7
+msgid "Wiki Cheatsheet"
+msgstr "Памятка по редактированию Вики"
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:13 static1/templates/wiki/includes/cheatsheet.html:13
+msgid "Wiki Syntax Help"
+msgstr "Помощь с wiki-синтаксом "
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:14 static1/templates/wiki/includes/cheatsheet.html:14
+msgid ""
+"This wiki uses <strong>Markdown</strong> for styling. There are several useful guides online. See any of "
+"the links below for in-depth details:"
+msgstr ""
+"Эта вики-страница использует форматирование <strong>Markdown</strong>. В Интернете есть несколько полезных "
+"руководств. Если вас интересуют подробности, смотрите любую из ссылок, приведённых ниже:"
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:16 static1/templates/wiki/includes/cheatsheet.html:16
+msgid "Markdown: Basics"
+msgstr "Markdown: основы"
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:17 static1/templates/wiki/includes/cheatsheet.html:17
+msgid "Quick Markdown Syntax Guide"
+msgstr "Краткое руководство по синтаксису Markdown"
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:18 static1/templates/wiki/includes/cheatsheet.html:18
+msgid "Miniature Markdown Guide"
+msgstr "Мини-руководство по Markdown"
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:20 static1/templates/wiki/includes/cheatsheet.html:20
+msgid "To create a new wiki article, create a link to it. Clicking the link gives you the creation page."
+msgstr ""
+"Чтобы создать новую wiki-статью, создайте ссылку на неё. Страница создания статьи откроется по этой ссылке."
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:21 static1/templates/wiki/includes/cheatsheet.html:21
+msgid "[Article Name](wiki:ArticleName)"
+msgstr "[Название Статьи](wiki:НазваниеСтатьи)"
+
+#. Translators: Do not translate "edX"
+#: static1/lms/templates/wiki/includes/cheatsheet.html:25 static1/templates/wiki/includes/cheatsheet.html:25
+msgid "edX Additions:"
+msgstr "Дополнения edX:"
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:27 static1/templates/wiki/includes/cheatsheet.html:27
+msgid "Math Expression"
+msgstr "Математическое выражение"
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:33 static1/templates/wiki/includes/cheatsheet.html:33
+msgid "Useful examples:"
+msgstr "Полезные примеры:"
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:36 static1/templates/wiki/includes/cheatsheet.html:36
+msgid "Wikipedia"
+msgstr "Википедия"
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:37 static1/templates/wiki/includes/cheatsheet.html:37
+msgid "edX Wiki"
+msgstr "Вики edX"
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:40 static1/templates/wiki/includes/cheatsheet.html:40
+msgid "Huge Header"
+msgstr "Заголовок первого уровня"
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:43 static1/templates/wiki/includes/cheatsheet.html:43
+msgid "Smaller Header"
+msgstr "Заголовок второго уровня"
+
+#. Translators: Leave the punctuation, but translate "emphasis"
+#: static1/lms/templates/wiki/includes/cheatsheet.html:47 static1/templates/wiki/includes/cheatsheet.html:47
+msgid "*emphasis* or _emphasis_"
+msgstr "*выделение курсивом* или _выделение курсивом_"
+
+#. Translators: Leave the punctuation, but translate "strong"
+#: static1/lms/templates/wiki/includes/cheatsheet.html:50 static1/templates/wiki/includes/cheatsheet.html:50
+msgid "**strong** or __strong__"
+msgstr "**выделение жирным** или __выделение жирным__"
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:52 static1/templates/wiki/includes/cheatsheet.html:52
+msgid "Unordered List"
+msgstr "Маркированный список"
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:53 static1/templates/wiki/includes/cheatsheet.html:53
+msgid "Sub Item 1"
+msgstr "Элемент списка уровня 1"
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:54 static1/templates/wiki/includes/cheatsheet.html:54
+msgid "Sub Item 2"
+msgstr "Элемент списка уровня 2"
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:56 static1/templates/wiki/includes/cheatsheet.html:56
+msgid "Ordered"
+msgstr "Упорядоченный"
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:57 static1/templates/wiki/includes/cheatsheet.html:57
+msgid "List"
+msgstr "Список"
+
+#: static1/lms/templates/wiki/includes/cheatsheet.html:59 static1/templates/wiki/includes/cheatsheet.html:59
+msgid "Quotes"
+msgstr "Цитаты"
+
+#: static1/lms/templates/wiki/includes/editor_widget.html:4
+#: static1/templates/wiki/includes/editor_widget.html:4
+#, python-format
+msgid ""
+"\n"
+"        Markdown syntax is allowed. See the %(start_link)scheatsheet%(end_link)s for help.\n"
+"    "
+msgstr ""
+"\n"
+"        Разрешается использовать синтаксис Markdown. Для справки смотрите  %(start_link)sподсказки"
+"%(end_link)s.\n"
+"    "
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:5
+#: static1/templates/wiki/plugins/attachments/index.html:5
+msgid "Attachments"
+msgstr "Вложения"
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:14
+#: static1/templates/wiki/plugins/attachments/index.html:14
+msgid "Upload new file"
+msgstr "Загрузить новый файл"
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:17
+#: static1/templates/wiki/plugins/attachments/index.html:17
+msgid "Search and add file"
+msgstr "Поиск и добавление файла"
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:23
+#: static1/templates/wiki/plugins/attachments/index.html:23
+msgid "Upload File"
+msgstr "Загрузить файл"
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:27
+#: static1/templates/wiki/plugins/attachments/index.html:27
+msgid "Upload file"
+msgstr "Загрузить файл"
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:35
+#: static1/templates/wiki/plugins/attachments/index.html:35
+msgid "Search files and articles"
+msgstr "Поиск по файлам и статьям"
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:36
+#: static1/templates/wiki/plugins/attachments/index.html:36
+msgid ""
+"You can reuse files from other articles. These files are subject to updates on other articles which may or "
+"may not be a good thing."
+msgstr ""
+"Вы можете использовать файлы из других статей. Эти файлы могут быть обновлены в других статьях, что может "
+"быть как хорошей, так и плохой новостью."
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:65
+#: static1/templates/wiki/plugins/attachments/index.html:65
+msgid ""
+"The following files are available for this article. Copy the markdown tag to directly refer to a file from "
+"the article text."
+msgstr ""
+"Следующие файлы доступны для этой статьи. Скопируйте тэги для непосредственной ссылки на файл из текста "
+"статьи."
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:74
+#: static1/templates/wiki/plugins/attachments/index.html:74
+msgid "deleted"
+msgstr "удалено"
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:84
+#: static1/templates/wiki/plugins/attachments/index.html:84
+msgid "Markdown tag"
+msgstr "Markdown-тег"
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:85
+#: static1/templates/wiki/plugins/attachments/index.html:85
+msgid "Uploaded by"
+msgstr "Загружено "
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:86
+#: static1/templates/wiki/plugins/attachments/index.html:86
+msgid "Size"
+msgstr "Размер"
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:87
+#: static1/templates/wiki/plugins/attachments/index.html:87
+msgid "File History"
+msgstr "История файла"
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:94
+#: static1/templates/wiki/plugins/attachments/index.html:94
+msgid "Detach"
+msgstr "Отделить"
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:97
+#: static1/templates/wiki/plugins/attachments/index.html:97
+msgid "Replace"
+msgstr "Заменить"
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:104
+#: static1/templates/wiki/plugins/attachments/index.html:104
+msgid "Restore"
+msgstr "Восстановить"
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:115
+#: static1/templates/wiki/plugins/attachments/index.html:115
+msgid "anonymous (IP logged)"
+msgstr "аноним (IP-адрес скрыт)"
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:122
+#: static1/templates/wiki/plugins/attachments/index.html:122
+msgid "File history"
+msgstr "История файла"
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:122
+#: static1/templates/wiki/plugins/attachments/index.html:122
+msgid "revisions"
+msgstr "исправления"
+
+#: static1/lms/templates/wiki/plugins/attachments/index.html:130
+#: static1/templates/wiki/plugins/attachments/index.html:130
+msgid "There are no attachments for this article."
+msgstr "Нет приложений для этой статьи."
+
+#: unital_cms/settings.py:210 unital_cms/settings.py:226
+msgid "ru"
+msgstr "рус."
+
+#: unital_cms/settings.py:211 unital_cms/settings.py:233
+msgid "en"
+msgstr "англ."
+
+#: unital_cms/templates/base.html:36
+msgid "Find Courses"
+msgstr "Найти курсы"
+
+#: unital_cms/templates/base.html:40
+msgid "Staff Dashboard"
+msgstr "Админ. панель"
+
+#: unital_cms/templates/base.html:45
+msgid "Representative Dashboard"
+msgstr "Представитель ЮЛ"
+
+#: unital_cms/templates/base.html:52
+msgid "Register Now"
+msgstr "Зарегистрируйтесь прямо сейчас"
+
+#: unital_cms/templates/base.html:62
+msgid "Dashboard for:"
+msgstr "Панель для:"
+
+#: unital_cms/templates/base.html:66
+msgid "More options dropdown"
+msgstr "Больше опций, выпадающее меню"
+
+#: unital_cms/templates/base.html:68
+msgid "Help"
+msgstr "Помощь"
+
+#: unital_cms/templates/base.html:69
+msgid "Log Out"
+msgstr "Выйти"
+
+#: unital_cms/templates/base.html:76
+msgid "Log in"
+msgstr "Войти"
+
+#: unital_cms/templates/base.html:99
+msgid "Built on"
+msgstr "Используется"
+
+#: userapp/models.py:53
+msgid "Male"
+msgstr "Мужской"
+
+#: userapp/models.py:54
+msgid "Female"
+msgstr "Женский"
+
+#. Translators: 'Other' refers to the student's gender
+#. Translators: 'Other' refers to the student's level of education
+#: userapp/models.py:56 userapp/models.py:77
+msgid "Other"
+msgstr "Другое"
+
+#: userapp/models.py:67
+msgid "Doctorate"
+msgstr "Докторская степень"
+
+#: userapp/models.py:68
+msgid "Master's or professional degree"
+msgstr "Магистратура или специалитет"
+
+#: userapp/models.py:69
+msgid "Bachelor's degree"
+msgstr "Бакалавриат"
+
+#: userapp/models.py:70
+msgid "Associate's degree"
+msgstr "Незаконченное высшее образование"
+
+#: userapp/models.py:71
+msgid "Secondary/high school"
+msgstr "Среднее/Полное среднее"
+
+#: userapp/models.py:72
+msgid "Junior secondary/junior high/middle school"
+msgstr "Незаконченное среднее/старшие классы/средние классы"
+
+#: userapp/models.py:73
+msgid "Elementary/primary school"
+msgstr "Начальное"
+
+#. Translators: 'None' refers to the student's level of education
+#: userapp/models.py:75
+msgid "None"
+msgstr "Нет"
