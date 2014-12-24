@@ -152,7 +152,7 @@ msgstr ""
 "Project-Id-Version: edx-platform\n"
 "Report-Msgid-Bugs-To: openedx-translation@googlegroups.com\n"
 "POT-Creation-Date: 2014-12-15 18:26+0000\n"
-"PO-Revision-Date: 2014-12-24 13:20+0300\n"
+"PO-Revision-Date: 2014-12-24 13:53+0300\n"
 "Last-Translator: Peter Markushin <p.markushin@itransition.com>\n"
 "Language-Team: Russian (http://www.transifex.com/projects/p/edx-platform/language/ru/)\n"
 "MIME-Version: 1.0\n"
@@ -2704,13 +2704,8 @@ msgstr "Просмотр взаимооценок"
 #. Translators: "Syllabus" appears on a tab that, when clicked, opens the
 #. syllabus of the course.
 #: common/lib/xmodule/xmodule/tabs.py lms/templates/courseware/syllabus.html
-#, fuzzy
 msgid "Syllabus"
-msgstr ""
-"#-#-#-#-#  django-partial.po (edx-platform)  #-#-#-#-#\n"
-"Программа обучения\n"
-"#-#-#-#-#  mako.po (edx-platform)  #-#-#-#-#\n"
-"Программа Обучения"
+msgstr "Программа обучения"
 
 #. Translators: 'Instructor' appears on the tab that leads to the instructor
 #. dashboard, which is
@@ -3401,13 +3396,8 @@ msgid "Search"
 msgstr "Поиск"
 
 #: common/static/js/vendor/mathjax-MathJax-c9db6ac/docs/source/mjtheme/layout.html lms/templates/static_templates/copyright.html
-#, fuzzy
 msgid "Copyright"
-msgstr ""
-"#-#-#-#-#  django-partial.po (edx-platform)  #-#-#-#-#\n"
-"Авторское право\n"
-"#-#-#-#-#  mako.po (edx-platform)  #-#-#-#-#\n"
-"Copyright"
+msgstr "Copyright"
 
 #: lms/djangoapps/class_dashboard/dashboard_data.py lms/djangoapps/instructor/views/api.py lms/templates/help_modal.html
 #: lms/templates/instructor/instructor_dashboard_2/generate_registarion_codes_modal.html
@@ -3735,13 +3725,8 @@ msgstr "Загружен курс {course_name}<br/>Ошибки:"
 
 #: lms/djangoapps/dashboard/sysadmin.py cms/templates/course-create-rerun.html cms/templates/index.html
 #: lms/templates/shoppingcart/receipt.html
-#, fuzzy
 msgid "Course Name"
-msgstr ""
-"#-#-#-#-#  django-partial.po (edx-platform)  #-#-#-#-#\n"
-"Наименование курса\n"
-"#-#-#-#-#  mako.po (edx-platform)  #-#-#-#-#\n"
-"Название курса"
+msgstr "Название курса"
 
 #: lms/djangoapps/dashboard/sysadmin.py
 msgid "Directory/ID"
@@ -4732,13 +4717,8 @@ msgid "Total Cost"
 msgstr "Итоговая Стоимость"
 
 #: lms/djangoapps/shoppingcart/reports.py lms/templates/instructor/instructor_dashboard_2/set_course_mode_price_modal.html
-#, fuzzy
 msgid "Currency"
-msgstr ""
-"#-#-#-#-#  django-partial.po (edx-platform)  #-#-#-#-#\n"
-"Денежная единица\n"
-"#-#-#-#-#  mako.po (edx-platform)  #-#-#-#-#\n"
-"Валюта"
+msgstr "Валюта"
 
 #: lms/djangoapps/shoppingcart/reports.py lms/templates/instructor/instructor_dashboard_2/add_coupon_modal.html
 #: lms/templates/instructor/instructor_dashboard_2/e-commerce.html lms/templates/instructor/instructor_dashboard_2/edit_coupon_modal.html
@@ -5729,13 +5709,8 @@ msgstr "Предварительный просмотр Вики"
 #. piece of UI that takes the full focus of the screen) is open or not
 #: lms/templates/wiki/edit.html lms/templates/wiki/history.html lms/templates/wiki/includes/cheatsheet.html lms/templates/dashboard.html
 #: lms/templates/modal/_modal-settings-language.html
-#, fuzzy
 msgid "window open"
-msgstr ""
-"#-#-#-#-#  django-partial.po (edx-platform)  #-#-#-#-#\n"
-"открыть окно\n"
-"#-#-#-#-#  mako.po (edx-platform)  #-#-#-#-#\n"
-"окно открыто"
+msgstr "окно открыто"
 
 #: lms/templates/wiki/edit.html
 msgid "Back to editor"
@@ -6124,13 +6099,8 @@ msgstr "Кодекс Чести"
 #. Translators: This is a legal document users must agree to
 #. in order to register a new account.
 #: openedx/core/djangoapps/user_api/views.py lms/templates/footer-edx-new.html lms/templates/footer-legacy.html lms/templates/footer.html
-#, fuzzy
 msgid "Terms of Service and Honor Code"
-msgstr ""
-"#-#-#-#-#  django-partial.po (edx-platform)  #-#-#-#-#\n"
-"Условия обслуживания и кодекс чести\n"
-"#-#-#-#-#  mako.po (edx-platform)  #-#-#-#-#\n"
-"Условия предоставления услуг и Кодекс чести"
+msgstr "Условия обслуживания и кодекс чести"
 
 #: openedx/core/djangoapps/user_api/views.py
 msgid "I agree to the {platform_name} {terms_of_service}."
@@ -9358,13 +9328,8 @@ msgid "Edit post title"
 msgstr "Редактировать заголовок сообщения"
 
 #: lms/templates/discussion/_underscore_templates.html wiki/forms.py
-#, fuzzy
 msgid "Title"
-msgstr ""
-"#-#-#-#-#  mako.po (edx-platform)  #-#-#-#-#\n"
-"Название\n"
-"#-#-#-#-#  wiki.po (edx-platform)  #-#-#-#-#\n"
-"Заголовок"
+msgstr "Название"
 
 #: lms/templates/discussion/_underscore_templates.html
 msgid "Update post"

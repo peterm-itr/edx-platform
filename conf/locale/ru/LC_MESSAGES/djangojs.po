@@ -82,7 +82,7 @@ msgstr ""
 "Project-Id-Version: edx-platform\n"
 "Report-Msgid-Bugs-To: openedx-translation@googlegroups.com\n"
 "POT-Creation-Date: 2014-12-15 18:24+0000\n"
-"PO-Revision-Date: 2014-12-24 13:14+0300\n"
+"PO-Revision-Date: 2014-12-24 13:55+0300\n"
 "Last-Translator: Peter Markushin <p.markushin@itransition.com>\n"
 "Language-Team: Russian (http://www.transifex.com/projects/p/edx-platform/language/ru/)\n"
 "MIME-Version: 1.0\n"
@@ -225,7 +225,7 @@ msgstr "нет ответа"
 
 #: common/lib/xmodule/xmodule/js/src/capa/display.js
 msgid "Status: unsubmitted"
-msgstr "Статус: не загружено"
+msgstr "Статус: не отправлено"
 
 #. Translators: A "rating" is a score a student gives to indicate how well
 #. they feel they were graded on this problem
