@@ -253,7 +253,7 @@
         <h2 class="sr">${_("Additional Personal Information")}</h2>
 
         <ol class="list-input">
-          % if settings.REGISTRATION_EXTRA_FIELDS['phone'] != 'hidden':
+          % if 'phone' in settings.REGISTRATION_EXTRA_FIELDS and settings.REGISTRATION_EXTRA_FIELDS['phone'] != 'hidden':
           <li class="field ${settings.REGISTRATION_EXTRA_FIELDS['phone']} text" id="field-phone">
             <label for="phone">${_('Phone')}</label>
             <input id="phone" type="text" name="phone" value="" placeholder="${_('example: +74951234567')}" aria-describedby="phone-tip" ${'required aria-required="true"' if settings.REGISTRATION_EXTRA_FIELDS['phone'] == 'required' else ''} />
