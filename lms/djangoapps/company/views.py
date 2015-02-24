@@ -150,6 +150,8 @@ def edit_company(request, company_id):
     :return:
     """
 
+    company_id = int(company_id)
+
     if company_id > 0:
         company = get_object_or_404(Company, id = company_id)
     else:

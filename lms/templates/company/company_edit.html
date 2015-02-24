@@ -136,7 +136,7 @@ from student.models import UserProfile
         <h2>${_('Company Info:')}</h2>
         <form method="POST" id="company-form" action="${reverse('staff_edit_company', args=(company.id or 0,))}">
             <input type="hidden" name="csrfmiddlewaretoken" value="${ csrf_token }">
-            <input type="hidden" name="company_id" value="${company.id}">
+            <input type="hidden" name="company_id" value="${company.id or 0}">
             <div class="field">
                 <label for="company_title">${_('Company Title')}</label>
                 <input type="text" id="company_title" required="required" value="${company.title}" name="company_title" placeholder="${_('Title')}">
