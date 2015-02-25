@@ -1427,7 +1427,7 @@ def create_account(request, post_override=None):  # pylint: disable-msg=too-many
         log.debug(u'In create_account with external_auth: user = %s, email=%s', name, email)
 
     # Confirm we have a properly formed request
-    for req_field in ['username', 'email', 'password', 'name']:
+    for req_field in ['username', 'password', 'name']:
         if req_field not in post_vars:
             js['value'] = _("Error (401 {field}). E-mail us.").format(field=req_field)
             js['field'] = req_field
@@ -1461,7 +1461,7 @@ def create_account(request, post_override=None):  # pylint: disable-msg=too-many
     # this is a good idea
     # TODO: Check password is sane
 
-    required_post_vars = ['username', 'email', 'name', 'password']
+    required_post_vars = ['username', 'name', 'password']
     required_post_vars += [fieldname for fieldname, val in extra_fields.items()
                            if val == 'required']
 
@@ -1516,6 +1516,9 @@ def create_account(request, post_override=None):  # pylint: disable-msg=too-many
             js['value'] = error_str[field_name]
             js['field'] = field_name
             return JsonResponse(js, status=400)
+
+    if not 'email' in post_vars or not post_vars['email']:
+        post_vars['email'] = post_vars['username'] + '@example.com'
 
     try:
         validate_email(post_vars['email'])
