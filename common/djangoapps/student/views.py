@@ -1580,6 +1580,10 @@ def create_account(request, post_override=None):  # pylint: disable-msg=too-many
 
     dog_stats_api.increment("common.student.account_created")
 
+    if '@example.com' in post_vars['email']:
+        user.is_active = True
+        user.save()
+
     email = post_vars['email']
 
     # Track the user's registration
@@ -1629,7 +1633,8 @@ def create_account(request, post_override=None):  # pylint: disable-msg=too-many
     # or external auth with bypass activated
     send_email = (
         not settings.FEATURES.get('AUTOMATIC_AUTH_FOR_TESTING') and
-        not (do_external_auth and settings.FEATURES.get('BYPASS_ACTIVATION_EMAIL_FOR_EXTAUTH'))
+        not (do_external_auth and settings.FEATURES.get('BYPASS_ACTIVATION_EMAIL_FOR_EXTAUTH')) and
+        not '@example.com' in post_vars['email']
     )
     if send_email:
         from_address = microsite.get_value(
