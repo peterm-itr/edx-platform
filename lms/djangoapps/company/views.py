@@ -248,7 +248,8 @@ def add_profile(request, company_id):
     extra_fields = getattr(settings, 'REGISTRATION_EXTRA_FIELDS', {})
 
     if not 'email' in post_vars or not post_vars['email']:
-        post_vars.update(email = post_vars['username'] + '@example.com')
+        post_vars = dict(post_vars.items())
+        post_vars.update(dict(email = post_vars['username'] + '@example.com'))
 
     required_post_vars = ['username', 'name', 'password']
     required_post_vars += [fieldname for fieldname, val in extra_fields.items()

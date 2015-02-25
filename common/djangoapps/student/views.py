@@ -1518,7 +1518,8 @@ def create_account(request, post_override=None):  # pylint: disable-msg=too-many
             return JsonResponse(js, status=400)
 
     if not 'email' in post_vars or not post_vars['email']:
-        post_vars.update(email = post_vars['username'] + '@example.com')
+        post_vars = dict(post_vars.items())
+        post_vars.update(dict(email = post_vars['username'] + '@example.com'))
 
     try:
         validate_email(post_vars['email'])
