@@ -239,7 +239,7 @@ def add_profile(request, company_id):
 
     post_vars = request.POST
 
-    for req_field in ['username', 'email', 'password', 'name']:
+    for req_field in ['username', 'password', 'name']:
         if req_field not in post_vars:
             js['value'] = _("Error (401 {field}). E-mail us.").format(field=req_field)
             js['field'] = req_field
@@ -247,7 +247,10 @@ def add_profile(request, company_id):
 
     extra_fields = getattr(settings, 'REGISTRATION_EXTRA_FIELDS', {})
 
-    required_post_vars = ['username', 'email', 'name', 'password']
+    if not 'email' in post_vars or not post_vars['email']:
+        post_vars['email'] = post_vars['username'] + '@example.com'
+
+    required_post_vars = ['username', 'name', 'password']
     required_post_vars += [fieldname for fieldname, val in extra_fields.items()
                            if val == 'required']
 

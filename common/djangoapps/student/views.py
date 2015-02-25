@@ -109,6 +109,8 @@ from shoppingcart.models import CourseRegistrationCode
 import analytics
 from eventtracking import tracker
 
+from django.db.models import Q
+
 
 log = logging.getLogger("edx.student")
 AUDIT_LOG = logging.getLogger("audit")
@@ -975,7 +977,8 @@ def login_user(request, error=""):  # pylint: disable-msg=too-many-statements,un
         email = request.POST['email']
         password = request.POST['password']
         try:
-            user = User.objects.get(email=email)
+
+            user = User.objects.get(Q(email=email) | Q(username=email))
         except User.DoesNotExist:
             if settings.FEATURES['SQUELCH_PII_IN_LOGS']:
                 AUDIT_LOG.warning(u"Login failed - Unknown user email")
