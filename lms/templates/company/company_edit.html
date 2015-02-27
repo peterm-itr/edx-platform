@@ -139,15 +139,15 @@ from student.models import UserProfile
             <input type="hidden" name="company_id" value="${company.id or 0}">
             <div class="field">
                 <label for="company_title">${_('Company Title')}</label>
-                <input type="text" id="company_title" required="required" value="${company.title}" name="company_title" placeholder="${_('Title')}">
+                <input type="text" id="company_title" required="required" value="${company.title | h}" name="company_title" placeholder="${_('Title')}">
             </div>
             <div class="field">
                 <label for="company_address">${_('Address')}</label>
-                <textarea id="company_address" name="company_address" placeholder="${_('Address')}">${company.address}</textarea>
+                <textarea id="company_address" name="company_address" placeholder="${_('Address')}">${company.address | h}</textarea>
             </div>
             <div class="field">
                 <label for="company_real_address">${_('Real Address')}</label>
-                <textarea id="company_real_address" name="company_real_address" placeholder="${_('Real Address')}">${company.real_address}</textarea>
+                <textarea id="company_real_address" name="company_real_address" placeholder="${_('Real Address')}">${company.real_address | h}</textarea>
             </div>
             <div class="field">
                 <label for="company_inn">${_('INN')}</label>
