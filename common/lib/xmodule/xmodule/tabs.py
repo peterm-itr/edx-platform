@@ -725,8 +725,8 @@ class CourseTabList(List):
         """
 
         course.tabs.extend([
-            CoursewareTab(),
             CourseInfoTab(),
+            CoursewareTab(),
         ])
 
         # Presence of syllabus tab is indicated by a course attribute

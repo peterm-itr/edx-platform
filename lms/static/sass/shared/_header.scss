@@ -21,7 +21,7 @@ header.global {
 
   h1.logo {
     @include float(left);
-    @include margin(-2px, 39px, 0, 0);
+    @include margin(-14px, 39px, 0, 0);
     position: relative;
 
     a {
