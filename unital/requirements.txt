@@ -25,6 +25,8 @@ djangocms-style==1.5
 djangocms-teaser==0.1
 djangocms-text-ckeditor==2.4.1
 djangocms-video==0.1
+django-mako==0.1.5pre
+mako=0.7.3
 html5lib==0.999
 pytz==2014.10
 requests==2.5.0

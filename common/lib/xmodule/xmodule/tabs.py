@@ -279,7 +279,7 @@ class CoursewareTab(EnrolledOrStaffTab):
     """
 
     type = 'courseware'
-    is_movable = False
+    # is_movable = False
 
     def __init__(self, tab_dict=None):  # pylint: disable=unused-argument
         super(CoursewareTab, self).__init__(
@@ -296,7 +296,7 @@ class CourseInfoTab(CourseTab):
     """
 
     type = 'course_info'
-    is_movable = False
+    # is_movable = False
 
     def __init__(self, tab_dict=None):
         super(CourseInfoTab, self).__init__(
