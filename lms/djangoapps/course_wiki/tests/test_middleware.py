@@ -10,16 +10,17 @@ from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 from xmodule.modulestore.tests.factories import CourseFactory
 
 from courseware.tests.factories import InstructorFactory
-from courseware.tests.modulestore_config import TEST_DATA_MONGO_MODULESTORE
+from xmodule.modulestore.tests.django_utils import TEST_DATA_MOCK_MODULESTORE
 from course_wiki.views import get_or_create_root
 
 
-@override_settings(MODULESTORE=TEST_DATA_MONGO_MODULESTORE)
 class TestWikiAccessMiddleware(ModuleStoreTestCase):
     """Tests for WikiAccessMiddleware."""
 
     def setUp(self):
         """Test setup."""
+        super(TestWikiAccessMiddleware, self).setUp()
+
         self.wiki = get_or_create_root()
 
         self.course_math101 = CourseFactory.create(org='edx', number='math101', display_name='2014', metadata={'use_unique_wiki_id': 'false'})

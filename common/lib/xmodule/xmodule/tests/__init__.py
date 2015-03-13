@@ -11,6 +11,7 @@ import json
 import os
 import pprint
 import unittest
+import inspect
 
 from contextlib import contextmanager
 from lazy import lazy
@@ -26,8 +27,10 @@ from xmodule.modulestore.inheritance import InheritanceMixin, own_metadata
 from opaque_keys.edx.locations import SlashSeparatedCourseKey
 from xmodule.mako_module import MakoDescriptorSystem
 from xmodule.error_module import ErrorDescriptor
+from xmodule.assetstore import AssetMetadata
 from xmodule.modulestore import ModuleStoreEnum
 from xmodule.modulestore.mongo.draft import DraftModuleStore
+from xmodule.modulestore.xml import CourseLocationManager
 from xmodule.modulestore.draft_and_published import DIRECT_ONLY_CATEGORIES, ModuleStoreDraftAndPublished
 
 
@@ -51,9 +54,16 @@ class TestModuleSystem(ModuleSystem):  # pylint: disable=abstract-method
     """
     ModuleSystem for testing
     """
+    def __init__(self, **kwargs):
+        id_manager = CourseLocationManager(kwargs['course_id'])
+        kwargs.setdefault('id_reader', id_manager)
+        kwargs.setdefault('id_generator', id_manager)
+        kwargs.setdefault('services', {}).setdefault('field-data', DictFieldData({}))
+        super(TestModuleSystem, self).__init__(**kwargs)
+
     def handler_url(self, block, handler, suffix='', query='', thirdparty=False):
         return '{usage_id}/{handler}{suffix}?{query}'.format(
-            usage_id=block.scope_ids.usage_id.to_deprecated_string(),
+            usage_id=unicode(block.scope_ids.usage_id),
             handler=handler,
             suffix=suffix,
             query=query,
@@ -61,9 +71,13 @@ class TestModuleSystem(ModuleSystem):  # pylint: disable=abstract-method
 
     def local_resource_url(self, block, uri):
         return 'resource/{usage_id}/{uri}'.format(
-            usage_id=block.scope_ids.usage_id.to_deprecated_string(),
+            usage_id=unicode(block.scope_ids.usage_id),
             uri=uri,
         )
+
+    # Disable XBlockAsides in most tests
+    def get_asides(self, block):
+        return []
 
 
 def get_test_system(course_id=SlashSeparatedCourseKey('org', 'course', 'run')):
@@ -79,14 +93,36 @@ def get_test_system(course_id=SlashSeparatedCourseKey('org', 'course', 'run')):
     where `my_render_func` is a function of the form my_render_func(template, context).
 
     """
+    user = Mock(name='get_test_system.user', is_staff=False)
+
+    descriptor_system = get_test_descriptor_system()
+
+    def get_module(descriptor):
+        """Mocks module_system get_module function"""
+        # pylint: disable=protected-access
+
+        # Unlike XBlock Runtimes or DescriptorSystems,
+        # each XModule is provided with a new ModuleSystem.
+        # Construct one for the new XModule.
+        module_system = get_test_system()
+
+        # Descriptors can all share a single DescriptorSystem.
+        # So, bind to the same one as the current descriptor.
+        module_system.descriptor_runtime = descriptor._runtime  # pylint: disable=protected-access
+
+        descriptor.bind_for_student(module_system, descriptor._field_data)
+
+        return descriptor
+
     return TestModuleSystem(
         static_url='/static',
-        track_function=Mock(),
-        get_module=Mock(),
+        track_function=Mock(name='get_test_system.track_function'),
+        get_module=get_module,
         render_template=mock_render_template,
         replace_urls=str,
-        user=Mock(is_staff=False),
-        filestore=Mock(),
+        user=user,
+        get_real_user=lambda(__): user,
+        filestore=Mock(name='get_test_system.filestore'),
         debug=True,
         hostname="edx.org",
         xqueue={
@@ -94,16 +130,16 @@ def get_test_system(course_id=SlashSeparatedCourseKey('org', 'course', 'run')):
             'callback_url': '/',
             'default_queuename': 'testqueue',
             'waittime': 10,
-            'construct_callback': Mock(side_effect="/"),
+            'construct_callback': Mock(name='get_test_system.xqueue.construct_callback', side_effect="/"),
         },
         node_path=os.environ.get("NODE_PATH", "/usr/local/lib/node_modules"),
         anonymous_student_id='student',
         open_ended_grading_interface=open_ended_grading_interface,
         course_id=course_id,
         error_descriptor_class=ErrorDescriptor,
-        get_user_role=Mock(is_staff=False),
-        descriptor_runtime=get_test_descriptor_system(),
-        user_location=Mock(),
+        get_user_role=Mock(name='get_test_system.get_user_role', is_staff=False),
+        user_location=Mock(name='get_test_system.user_location'),
+        descriptor_runtime=descriptor_system,
     )
 
 
@@ -111,14 +147,19 @@ def get_test_descriptor_system():
     """
     Construct a test DescriptorSystem instance.
     """
-    return MakoDescriptorSystem(
-        load_item=Mock(),
-        resources_fs=Mock(),
-        error_tracker=Mock(),
+    field_data = DictFieldData({})
+
+    descriptor_system = MakoDescriptorSystem(
+        load_item=Mock(name='get_test_descriptor_system.load_item'),
+        resources_fs=Mock(name='get_test_descriptor_system.resources_fs'),
+        error_tracker=Mock(name='get_test_descriptor_system.error_tracker'),
         render_template=mock_render_template,
         mixins=(InheritanceMixin, XModuleMixin),
-        field_data=DictFieldData({}),
+        field_data=field_data,
+        services={'field-data': field_data},
     )
+    descriptor_system.get_asides = lambda block: []
+    return descriptor_system
 
 
 def mock_render_template(*args, **kwargs):
@@ -132,9 +173,6 @@ def mock_render_template(*args, **kwargs):
 
 
 class ModelsTest(unittest.TestCase):
-    def setUp(self):
-        pass
-
     def test_load_class(self):
         vc = XModuleDescriptor.load_class('video')
         vc_str = "<class 'xmodule.video_module.video_module.VideoDescriptor'>"
@@ -147,13 +185,9 @@ class LogicTest(unittest.TestCase):
     raw_field_data = {}
 
     def setUp(self):
-        class EmptyClass:
-            """Empty object."""
-            url_name = ''
-            category = 'test'
-
+        super(LogicTest, self).setUp()
         self.system = get_test_system()
-        self.descriptor = EmptyClass()
+        self.descriptor = Mock(name="descriptor", url_name='', category='test')
 
         self.xmodule_class = self.descriptor_class.module_class
         usage_key = self.system.course_id.make_usage_key(self.descriptor.category, 'test_loc')
@@ -189,19 +223,12 @@ class BulkAssertionManager(object):
     the failures at once, rather than only seeing single failures.
     """
     def __init__(self, test_case):
-        self._equal_expected = []
-        self._equal_actual = []
+        self._equal_assertions = []
         self._test_case = test_case
 
-    def assertEqual(self, expected, actual, description=None):
-        if description is None:
-            description = u"{!r} does not equal {!r}".format(expected, actual)
-        if expected != actual:
-            self._equal_expected.append((description, expected))
-            self._equal_actual.append((description, actual))
-
     def run_assertions(self):
-        super(BulkAssertionTest, self._test_case).assertEqual(self._equal_expected, self._equal_actual)
+        if len(self._equal_assertions) > 0:
+            raise AssertionError(self._equal_assertions)
 
 
 class BulkAssertionTest(unittest.TestCase):
@@ -229,7 +256,15 @@ class BulkAssertionTest(unittest.TestCase):
 
     def assertEqual(self, expected, actual, message=None):
         if self._manager is not None:
-            self._manager.assertEqual(expected, actual, message)
+            try:
+                super(BulkAssertionTest, self).assertEqual(expected, actual, message)
+            except Exception as error:  # pylint: disable=broad-except
+                exc_stack = inspect.stack()[1]
+                if message is not None:
+                    msg = '{} -> {}:{} -> {}'.format(message, exc_stack[1], exc_stack[2], unicode(error))
+                else:
+                    msg = '{}:{} -> {}'.format(exc_stack[1], exc_stack[2], unicode(error))
+                self._manager._equal_assertions.append(msg)  # pylint: disable=protected-access
         else:
             super(BulkAssertionTest, self).assertEqual(expected, actual, message)
     assertEquals = assertEqual
@@ -486,3 +521,22 @@ class CourseComparisonTest(BulkAssertionTest):
             actual_thumbs = actual_store.get_all_content_thumbnails_for_course(actual_course_key)
 
             self._assertAssetsEqual(expected_course_key, expected_thumbs, actual_course_key, actual_thumbs)
+
+    def assertAssetsMetadataEqual(self, expected_modulestore, expected_course_key, actual_modulestore, actual_course_key):
+        """
+        Assert that the modulestore asset metdata for the ``expected_course_key`` and the ``actual_course_key``
+        are equivalent.
+        """
+        expected_course_assets = expected_modulestore.get_all_asset_metadata(
+            expected_course_key, None, sort=('displayname', ModuleStoreEnum.SortOrder.descending)
+        )
+        actual_course_assets = actual_modulestore.get_all_asset_metadata(
+            actual_course_key, None, sort=('displayname', ModuleStoreEnum.SortOrder.descending)
+        )
+        self.assertEquals(len(expected_course_assets), len(actual_course_assets))
+        for idx, __ in enumerate(expected_course_assets):
+            for attr in AssetMetadata.ATTRS_ALLOWED_TO_UPDATE:
+                if attr in ('edited_on',):
+                    # edited_on is updated upon import.
+                    continue
+                self.assertEquals(getattr(expected_course_assets[idx], attr), getattr(actual_course_assets[idx], attr))

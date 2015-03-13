@@ -135,11 +135,15 @@ class IntegrationTest(testutil.TestCase, test.TestCase):
             else:
                 expected_control_text = pipeline.get_login_url(self.PROVIDER_CLASS.NAME, pipeline.AUTH_ENTRY_DASHBOARD)
 
-            icon_state = re.search(r'third-party-auth.+icon icon-(\w+)', response.content, re.DOTALL).groups()[0]
             provider_name = re.search(r'<span class="provider">([^<]+)', response.content, re.DOTALL).groups()[0]
 
             self.assertIn(expected_control_text, response.content)
-            self.assertEqual('link' if linked else 'unlink', icon_state)
+            if linked:
+                self.assertIn("fa fa-link", response.content)
+                self.assertNotIn("fa fa-unlink", response.content)
+            else:
+                self.assertNotIn("fa fa-link", response.content)
+                self.assertIn("fa fa-unlink", response.content)
             self.assertEqual(self.PROVIDER_CLASS.NAME, provider_name)
 
     def assert_exception_redirect_looks_correct(self, expected_uri, auth_entry=None):
@@ -198,13 +202,6 @@ class IntegrationTest(testutil.TestCase, test.TestCase):
             self.assertFalse(payload.get('success'))
             self.assertIn('incorrect', payload.get('value'))
 
-    def assert_javascript_would_submit_login_form(self, boolean, response):
-        """Asserts we pass form submit JS the right boolean string."""
-        argument_string = re.search(
-            r'function\ post_form_if_pipeline_running.*\(([a-z]+)\)', response.content, re.DOTALL).groups()[0]
-        self.assertIn(argument_string, ['true', 'false'])
-        self.assertEqual(boolean, True if argument_string == 'true' else False)
-
     def assert_json_failure_response_is_inactive_account(self, response):
         """Asserts failure on /login for inactive account looks right."""
         self.assertEqual(200, response.status_code)  # Yes, it's a 200 even though it's a failure.
@@ -234,15 +231,14 @@ class IntegrationTest(testutil.TestCase, test.TestCase):
     def assert_login_response_before_pipeline_looks_correct(self, response):
         """Asserts a GET of /login not in the pipeline looks correct."""
         self.assertEqual(200, response.status_code)
-        self.assertIn('Sign in with ' + self.PROVIDER_CLASS.NAME, response.content)
-        self.assert_javascript_would_submit_login_form(False, response)
-        self.assert_signin_button_looks_functional(response.content, pipeline.AUTH_ENTRY_LOGIN)
+        # The combined login/registration page dynamically generates the login button,
+        # but we can still check that the provider name is passed in the data attribute
+        # for the container element.
+        self.assertIn(self.PROVIDER_CLASS.NAME, response.content)
 
     def assert_login_response_in_pipeline_looks_correct(self, response):
         """Asserts a GET of /login in the pipeline looks correct."""
         self.assertEqual(200, response.status_code)
-        # Make sure the form submit JS is told to submit the form:
-        self.assert_javascript_would_submit_login_form(True, response)
 
     def assert_password_overridden_by_pipeline(self, username, password):
         """Verifies that the given password is not correct.
@@ -264,25 +260,20 @@ class IntegrationTest(testutil.TestCase, test.TestCase):
     def assert_redirect_to_login_looks_correct(self, response):
         """Asserts a response would redirect to /login."""
         self.assertEqual(302, response.status_code)
-        self.assertEqual('/' + pipeline.AUTH_ENTRY_LOGIN, response.get('Location'))
+        self.assertEqual('/login', response.get('Location'))
 
     def assert_redirect_to_register_looks_correct(self, response):
         """Asserts a response would redirect to /register."""
         self.assertEqual(302, response.status_code)
-        self.assertEqual('/' + pipeline.AUTH_ENTRY_REGISTER, response.get('Location'))
+        self.assertEqual('/register', response.get('Location'))
 
     def assert_register_response_before_pipeline_looks_correct(self, response):
         """Asserts a GET of /register not in the pipeline looks correct."""
         self.assertEqual(200, response.status_code)
-        self.assertIn('Sign up with ' + self.PROVIDER_CLASS.NAME, response.content)
-        self.assert_signin_button_looks_functional(response.content, pipeline.AUTH_ENTRY_REGISTER)
-
-    def assert_signin_button_looks_functional(self, content, auth_entry):
-        """Asserts JS is available to signin buttons and has the right args."""
-        self.assertTrue(re.search(r'function thirdPartySignin', content))
-        self.assertEqual(
-            pipeline.get_login_url(self.PROVIDER_CLASS.NAME, auth_entry),
-            re.search(r"thirdPartySignin\(event, '([^']+)", content).groups()[0])
+        # The combined login/registration page dynamically generates the register button,
+        # but we can still check that the provider name is passed in the data attribute
+        # for the container element.
+        self.assertIn(self.PROVIDER_CLASS.NAME, response.content)
 
     def assert_social_auth_does_not_exist_for_user(self, user, strategy):
         """Asserts a user does not have an auth with the expected provider."""
@@ -424,6 +415,7 @@ class IntegrationTest(testutil.TestCase, test.TestCase):
         request, strategy = self.get_request_and_strategy(
             auth_entry=pipeline.AUTH_ENTRY_LOGIN, redirect_uri='social:complete')
         strategy.backend.auth_complete = mock.MagicMock(return_value=self.fake_auth_complete(strategy))
+        pipeline.analytics.track = mock.MagicMock()
         request.user = self.create_user_models_for_existing_account(
             strategy, 'user@example.com', 'password', self.get_username(), skip_social_auth=True)
 
@@ -558,6 +550,7 @@ class IntegrationTest(testutil.TestCase, test.TestCase):
         request, strategy = self.get_request_and_strategy(
             auth_entry=pipeline.AUTH_ENTRY_LOGIN, redirect_uri='social:complete')
         strategy.backend.auth_complete = mock.MagicMock(return_value=self.fake_auth_complete(strategy))
+        pipeline.analytics.track = mock.MagicMock()
         user = self.create_user_models_for_existing_account(
             strategy, 'user@example.com', 'password', self.get_username())
         self.assert_social_auth_exists_for_user(user, strategy)
@@ -689,7 +682,19 @@ class IntegrationTest(testutil.TestCase, test.TestCase):
         # social auth.
         self.assert_social_auth_does_not_exist_for_user(created_user, strategy)
 
-        # We should be redirected back to the complete page, setting
+        # Since the user's account is not yet active, we should be redirected to /login
+        self.assert_redirect_to_login_looks_correct(
+            actions.do_complete(
+                request.social_strategy, social_views._do_login, request.user, None,  # pylint: disable-msg=protected-access
+                redirect_field_name=auth.REDIRECT_FIELD_NAME
+            )
+        )
+
+        # Activate the user's account
+        strategy.request.user.is_active = True
+        strategy.request.user.save()
+
+        # Try again.  This time, we should be redirected back to the complete page, setting
         # the "logged in" cookie for the marketing site.
         self.assert_logged_in_cookie_redirect(actions.do_complete(
             request.social_strategy, social_views._do_login, request.user, None,  # pylint: disable-msg=protected-access

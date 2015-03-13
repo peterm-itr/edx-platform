@@ -1,43 +1,45 @@
 """
-Tests for student enrollment.
+Tests for user enrollment.
 """
 import ddt
 import json
 import unittest
 
-from django.test.utils import override_settings
+from mock import patch
 from django.core.urlresolvers import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
 from django.conf import settings
-from xmodule.modulestore.tests.django_utils import (
-    ModuleStoreTestCase, mixed_store_config
-)
+from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 from xmodule.modulestore.tests.factories import CourseFactory
+from util.testing import UrlResetMixin
+from enrollment import api
+from enrollment.errors import CourseEnrollmentError
+from openedx.core.djangoapps.user_api.models import UserOrgTag
+from django.test.utils import override_settings
 from student.tests.factories import UserFactory, CourseModeFactory
 from student.models import CourseEnrollment
-
-# Since we don't need any XML course fixtures, use a modulestore configuration
-# that disables the XML modulestore.
-MODULESTORE_CONFIG = mixed_store_config(settings.COMMON_TEST_DATA_ROOT, {}, include_xml=False)
+from embargo.test_utils import restrict_course
 
 
+@override_settings(EDX_API_KEY="i am a key")
 @ddt.ddt
-@override_settings(MODULESTORE=MODULESTORE_CONFIG)
 @unittest.skipUnless(settings.ROOT_URLCONF == 'lms.urls', 'Test only valid in lms')
 class EnrollmentTest(ModuleStoreTestCase, APITestCase):
     """
-    Test student enrollment, especially with different course modes.
+    Test user enrollment, especially with different course modes.
     """
     USERNAME = "Bob"
     EMAIL = "bob@example.com"
     PASSWORD = "edx"
+    API_KEY = "i am a key"
 
     def setUp(self):
         """ Create a course and user, then log in. """
         super(EnrollmentTest, self).setUp()
         self.course = CourseFactory.create()
         self.user = UserFactory.create(username=self.USERNAME, email=self.EMAIL, password=self.PASSWORD)
+        self.other_user = UserFactory.create()
         self.client.login(username=self.USERNAME, password=self.PASSWORD)
 
     @ddt.data(
@@ -68,6 +70,47 @@ class EnrollmentTest(ModuleStoreTestCase, APITestCase):
         self.assertTrue(is_active)
         self.assertEqual(course_mode, enrollment_mode)
 
+    def test_check_enrollment(self):
+        CourseModeFactory.create(
+            course_id=self.course.id,
+            mode_slug='honor',
+            mode_display_name='Honor',
+        )
+        # Create an enrollment
+        self._create_enrollment()
+        resp = self.client.get(
+            reverse('courseenrollment', kwargs={"user": self.user.username, "course_id": unicode(self.course.id)})
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = json.loads(resp.content)
+        self.assertEqual(unicode(self.course.id), data['course_details']['course_id'])
+        self.assertEqual('honor', data['mode'])
+        self.assertTrue(data['is_active'])
+
+    @ddt.data(
+        (True, u"True"),
+        (False, u"False"),
+        (None, None)
+    )
+    @ddt.unpack
+    def test_email_opt_in_true(self, opt_in, pref_value):
+        """
+        Verify that the email_opt_in parameter sets the underlying flag.
+        And that if the argument is not present, then it does not affect the flag
+        """
+        def _assert_no_opt_in_set():
+            """ Check the tag doesn't exit"""
+            with self.assertRaises(UserOrgTag.DoesNotExist):
+                UserOrgTag.objects.get(user=self.user, org=self.course.id.org, key="email-optin")
+
+        _assert_no_opt_in_set()
+        self._create_enrollment(email_opt_in=opt_in)
+        if opt_in is None:
+            _assert_no_opt_in_set()
+        else:
+            preference = UserOrgTag.objects.get(user=self.user, org=self.course.id.org, key="email-optin")
+            self.assertEquals(preference.value, pref_value)
+
     def test_enroll_prof_ed(self):
         # Create the prod ed mode.
         CourseModeFactory.create(
@@ -77,51 +120,248 @@ class EnrollmentTest(ModuleStoreTestCase, APITestCase):
         )
 
         # Enroll in the course, this will fail if the mode is not explicitly professional.
-        resp = self.client.post(reverse('courseenrollment', kwargs={'course_id': (unicode(self.course.id))}))
-        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        resp = self._create_enrollment(expected_status=status.HTTP_400_BAD_REQUEST)
 
         # While the enrollment wrong is invalid, the response content should have
         # all the valid enrollment modes.
         data = json.loads(resp.content)
-        self.assertEqual(unicode(self.course.id), data['course_id'])
-        self.assertEqual(1, len(data['course_modes']))
-        self.assertEqual('professional', data['course_modes'][0]['slug'])
+        self.assertEqual(unicode(self.course.id), data['course_details']['course_id'])
+        self.assertEqual(1, len(data['course_details']['course_modes']))
+        self.assertEqual('professional', data['course_details']['course_modes'][0]['slug'])
+
+    def test_user_not_specified(self):
+        CourseModeFactory.create(
+            course_id=self.course.id,
+            mode_slug='honor',
+            mode_display_name='Honor',
+        )
+        # Create an enrollment
+        self._create_enrollment()
+        resp = self.client.get(
+            reverse('courseenrollment', kwargs={"course_id": unicode(self.course.id)})
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = json.loads(resp.content)
+        self.assertEqual(unicode(self.course.id), data['course_details']['course_id'])
+        self.assertEqual('honor', data['mode'])
+        self.assertTrue(data['is_active'])
 
     def test_user_not_authenticated(self):
         # Log out, so we're no longer authenticated
         self.client.logout()
 
         # Try to enroll, this should fail.
-        resp = self.client.post(reverse('courseenrollment', kwargs={'course_id': (unicode(self.course.id))}))
-        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+        self._create_enrollment(expected_status=status.HTTP_401_UNAUTHORIZED)
 
     def test_user_not_activated(self):
-        # Create a user account, but don't activate it
+        # Log out the default user, Bob.
+        self.client.logout()
+
+        # Create a user account
         self.user = UserFactory.create(
             username="inactive",
             email="inactive@example.com",
             password=self.PASSWORD,
-            is_active=False
+            is_active=True
         )
 
         # Log in with the unactivated account
         self.client.login(username="inactive", password=self.PASSWORD)
 
+        # Deactivate the user. Has to be done after login to get the user into the
+        # request and properly logged in.
+        self.user.is_active = False
+        self.user.save()
+
         # Enrollment should succeed, even though we haven't authenticated.
-        resp = self.client.post(reverse('courseenrollment', kwargs={'course_id': (unicode(self.course.id))}))
-        self.assertEqual(resp.status_code, 200)
+        self._create_enrollment()
+
+    def test_user_does_not_match_url(self):
+        # Try to enroll a user that is not the authenticated user.
+        CourseModeFactory.create(
+            course_id=self.course.id,
+            mode_slug='honor',
+            mode_display_name='Honor',
+        )
+        self._create_enrollment(username=self.other_user.username, expected_status=status.HTTP_404_NOT_FOUND)
+        # Verify that the server still has access to this endpoint.
+        self.client.logout()
+        self._create_enrollment(username=self.other_user.username, as_server=True)
+
+    def test_user_does_not_match_param_for_list(self):
+        CourseModeFactory.create(
+            course_id=self.course.id,
+            mode_slug='honor',
+            mode_display_name='Honor',
+        )
+        resp = self.client.get(reverse('courseenrollments'), {"user": self.other_user.username})
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        # Verify that the server still has access to this endpoint.
+        self.client.logout()
+        resp = self.client.get(
+            reverse('courseenrollments'), {"user": self.other_user.username}, **{'HTTP_X_EDX_API_KEY': self.API_KEY}
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_user_does_not_match_param(self):
+        CourseModeFactory.create(
+            course_id=self.course.id,
+            mode_slug='honor',
+            mode_display_name='Honor',
+        )
+        resp = self.client.get(
+            reverse('courseenrollment', kwargs={"user": self.other_user.username, "course_id": unicode(self.course.id)})
+        )
+        # Verify that the server still has access to this endpoint.
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        self.client.logout()
+        resp = self.client.get(
+            reverse('courseenrollment', kwargs={"user": self.other_user.username, "course_id": unicode(self.course.id)}),
+            **{'HTTP_X_EDX_API_KEY': self.API_KEY}
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_get_course_details(self):
+        CourseModeFactory.create(
+            course_id=self.course.id,
+            mode_slug='honor',
+            mode_display_name='Honor',
+            sku='123',
+        )
+        resp = self.client.get(
+            reverse('courseenrollmentdetails', kwargs={"course_id": unicode(self.course.id)})
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = json.loads(resp.content)
+        self.assertEqual(unicode(self.course.id), data['course_id'])
+        mode = data['course_modes'][0]
+        self.assertEqual(mode['slug'], 'honor')
+        self.assertEqual(mode['sku'], '123')
+        self.assertEqual(mode['name'], 'Honor')
 
     def test_with_invalid_course_id(self):
-        # Create an enrollment
-        resp = self.client.post(reverse('courseenrollment', kwargs={'course_id': 'entirely/fake/course'}))
+        self._create_enrollment(course_id='entirely/fake/course', expected_status=status.HTTP_400_BAD_REQUEST)
+
+    def test_get_enrollment_details_bad_course(self):
+        resp = self.client.get(
+            reverse('courseenrollmentdetails', kwargs={"course_id": "some/fake/course"})
+        )
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def _create_enrollment(self):
+    @patch.object(api, "get_enrollment")
+    def test_get_enrollment_internal_error(self, mock_get_enrollment):
+        mock_get_enrollment.side_effect = CourseEnrollmentError("Something bad happened.")
+        resp = self.client.get(
+            reverse('courseenrollment', kwargs={"user": self.user.username, "course_id": unicode(self.course.id)})
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_enrollment_already_enrolled(self):
+        response = self._create_enrollment()
+        repeat_response = self._create_enrollment()
+        self.assertEqual(json.loads(response.content), json.loads(repeat_response.content))
+
+    def test_get_enrollment_with_invalid_key(self):
+        resp = self.client.post(
+            reverse('courseenrollments'),
+            {
+                'course_details': {
+                    'course_id': 'invalidcourse'
+                },
+                'user': self.user.username
+            },
+            format='json'
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("No course ", resp.content)
+
+    def _create_enrollment(self, course_id=None, username=None, expected_status=status.HTTP_200_OK, email_opt_in=None, as_server=False):
         """Enroll in the course and verify the URL we are sent to. """
-        resp = self.client.post(reverse('courseenrollment', kwargs={'course_id': (unicode(self.course.id))}))
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        data = json.loads(resp.content)
-        self.assertEqual(unicode(self.course.id), data['course']['course_id'])
-        self.assertEqual('honor', data['mode'])
-        self.assertTrue(data['is_active'])
+        course_id = unicode(self.course.id) if course_id is None else course_id
+        username = self.user.username if username is None else username
+
+        params = {
+            'course_details': {
+                'course_id': course_id
+            },
+            'user': username
+        }
+        if email_opt_in is not None:
+            params['email_opt_in'] = email_opt_in
+        if as_server:
+            resp = self.client.post(reverse('courseenrollments'), params, format='json', **{'HTTP_X_EDX_API_KEY': self.API_KEY})
+        else:
+            resp = self.client.post(reverse('courseenrollments'), params, format='json')
+
+        self.assertEqual(resp.status_code, expected_status)
+
+        if expected_status == status.HTTP_200_OK:
+            data = json.loads(resp.content)
+            self.assertEqual(course_id, data['course_details']['course_id'])
+            self.assertEqual('honor', data['mode'])
+            self.assertTrue(data['is_active'])
         return resp
+
+
+@unittest.skipUnless(settings.ROOT_URLCONF == 'lms.urls', 'Test only valid in lms')
+class EnrollmentEmbargoTest(UrlResetMixin, ModuleStoreTestCase):
+    """Test that enrollment is blocked from embargoed countries. """
+
+    USERNAME = "Bob"
+    EMAIL = "bob@example.com"
+    PASSWORD = "edx"
+
+    @patch.dict(settings.FEATURES, {'EMBARGO': True})
+    def setUp(self):
+        """ Create a course and user, then log in. """
+        super(EnrollmentEmbargoTest, self).setUp('embargo')
+        self.course = CourseFactory.create()
+        self.user = UserFactory.create(username=self.USERNAME, email=self.EMAIL, password=self.PASSWORD)
+        self.client.login(username=self.USERNAME, password=self.PASSWORD)
+
+    @patch.dict(settings.FEATURES, {'EMBARGO': True})
+    def test_embargo_change_enrollment_restrict(self):
+        url = reverse('courseenrollments')
+        data = json.dumps({
+            'course_details': {
+                'course_id': unicode(self.course.id)
+            },
+            'user': self.user.username
+        })
+
+        # Attempt to enroll from a country embargoed for this course
+        with restrict_course(self.course.id) as redirect_url:
+            response = self.client.post(url, data, content_type='application/json')
+
+            # Expect an error response
+            self.assertEqual(response.status_code, 403)
+
+            # Expect that the redirect URL is included in the response
+            resp_data = json.loads(response.content)
+            self.assertEqual(resp_data['user_message_url'], redirect_url)
+
+        # Verify that we were not enrolled
+        self.assertEqual(self._get_enrollments(), [])
+
+    @patch.dict(settings.FEATURES, {'EMBARGO': True})
+    def test_embargo_change_enrollment_allow(self):
+        url = reverse('courseenrollments')
+        data = json.dumps({
+            'course_details': {
+                'course_id': unicode(self.course.id)
+            },
+            'user': self.user.username
+        })
+
+        response = self.client.post(url, data, content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+
+        # Verify that we were enrolled
+        self.assertEqual(len(self._get_enrollments()), 1)
+
+    def _get_enrollments(self):
+        """Retrieve the enrollment list for the current user. """
+        url = reverse('courseenrollments')
+        resp = self.client.get(url)
+        return json.loads(resp.content)

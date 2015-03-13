@@ -3,6 +3,7 @@ Serializer for video outline
 """
 from rest_framework.reverse import reverse
 
+from xmodule.modulestore.mongo.base import BLOCK_TYPES_WITH_CHILDREN
 from courseware.access import has_access
 
 from edxval.api import (
@@ -14,10 +15,10 @@ class BlockOutline(object):
     """
     Serializes course videos, pulling data from VAL and the video modules.
     """
-    def __init__(self, course_id, start_block, categories_to_outliner, request):
+    def __init__(self, course_id, start_block, block_types, request):
         """Create a BlockOutline using `start_block` as a starting point."""
         self.start_block = start_block
-        self.categories_to_outliner = categories_to_outliner
+        self.block_types = block_types
         self.course_id = course_id
         self.request = request  # needed for making full URLS
         self.local_cache = {}
@@ -48,37 +49,86 @@ class BlockOutline(object):
             return reversed(block_path)
 
         def find_urls(block):
-            """section and unit urls for block"""
+            """
+            Find the section and unit urls for a block.
+
+            Returns:
+                unit_url, section_url:
+                    unit_url (str): The url of a unit
+                    section_url (str): The url of a section
+
+            """
             block_path = []
             while block in child_to_parent:
                 block = child_to_parent[block]
                 block_path.append(block)
 
-            course, chapter, section, unit = list(reversed(block_path))[:4]
-            position = 1
-            unit_name = unit.url_name
-            for block in section.children:
-                if block.name == unit_name:
-                    break
-                position += 1
+            block_list = list(reversed(block_path))
+            block_count = len(block_list)
 
-            kwargs = dict(
-                course_id=course.id.to_deprecated_string(),
-                chapter=chapter.url_name,
-                section=section.url_name
-            )
-            section_url = reverse(
-                "courseware_section",
-                kwargs=kwargs,
-                request=self.request,
-            )
-            kwargs['position'] = position
-            unit_url = reverse(
-                "courseware_position",
-                kwargs=kwargs,
-                request=self.request,
-            )
-            return unit_url, section_url, block_path
+            chapter_id = block_list[1].location.block_id if block_count > 1 else None
+            section = block_list[2] if block_count > 2 else None
+            position = None
+
+            #position is found traversing the section block
+            if block_count > 3:
+                position = 1
+                for block in section.children:
+                    if block.name == block_list[3].url_name:
+                        break
+                    position += 1
+
+            if chapter_id is None:
+                no_chapter_url = reverse(
+                    "courseware",
+                    kwargs=dict(
+                        course_id=unicode(self.course_id),
+                    ),
+                    request=self.request
+                )
+                return no_chapter_url, no_chapter_url
+            elif section is None:
+                no_section_url = reverse(
+                    "courseware_chapter",
+                    kwargs=dict(
+                        course_id=unicode(self.course_id),
+                        chapter=chapter_id
+                    ),
+                    request=self.request
+                )
+                return no_section_url, no_section_url
+            elif position is None:
+                no_position_url = reverse(
+                    "courseware_section",
+                    kwargs=dict(
+                        course_id=unicode(self.course_id),
+                        chapter=chapter_id,
+                        section=section.url_name
+                    ),
+                    request=self.request
+                )
+                return no_position_url, no_position_url
+            else:
+                section_url = reverse(
+                    "courseware_section",
+                    kwargs=dict(
+                        course_id=unicode(self.course_id),
+                        chapter=chapter_id,
+                        section=section.url_name
+                    ),
+                    request=self.request
+                )
+                unit_url = reverse(
+                    "courseware_position",
+                    kwargs=dict(
+                        course_id=unicode(self.course_id),
+                        chapter=chapter_id,
+                        section=section.url_name,
+                        position=position
+                    ),
+                    request=self.request
+                )
+                return unit_url, section_url
 
         user = self.request.user
 
@@ -94,24 +144,33 @@ class BlockOutline(object):
                 # from the table-of-contents.
                 continue
 
-            if curr_block.category in self.categories_to_outliner:
+            if curr_block.location.block_type in self.block_types:
                 if not has_access(user, 'load', curr_block, course_key=self.course_id):
                     continue
 
-                summary_fn = self.categories_to_outliner[curr_block.category]
+                summary_fn = self.block_types[curr_block.category]
                 block_path = list(path(curr_block))
-                unit_url, section_url, _ = find_urls(curr_block)
+                unit_url, section_url = find_urls(curr_block)
 
                 yield {
                     "path": block_path,
-                    "named_path": [b["name"] for b in block_path[:-1]],
+                    "named_path": [b["name"] for b in block_path],
                     "unit_url": unit_url,
                     "section_url": section_url,
                     "summary": summary_fn(self.course_id, curr_block, self.request, self.local_cache)
                 }
 
+            def parent_or_requested_block_type(usage_key):
+                """
+                Returns whether the usage_key's block_type is one of self.block_types or a parent type.
+                """
+                return (
+                    usage_key.block_type in self.block_types or
+                    usage_key.block_type in BLOCK_TYPES_WITH_CHILDREN
+                )
+
             if curr_block.has_children:
-                for block in reversed(curr_block.get_children()):
+                for block in reversed(curr_block.get_children(usage_key_filter=parent_or_requested_block_type)):
                     stack.append(block)
                     child_to_parent[block] = curr_block
 

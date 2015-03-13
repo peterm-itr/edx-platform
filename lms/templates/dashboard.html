@@ -111,9 +111,9 @@
 
               <div class="status">
                 % if state.has_account:
-                <i class="icon icon-link"></i> <span class="copy">${_("Linked")}</span>
+                <i class="icon fa fa-link"></i> <span class="copy">${_("Linked")}</span>
                 % else:
-                <i class="icon icon-unlink"></i><span class="copy">${_("Not Linked")}</span>
+                <i class="icon fa fa-unlink"></i><span class="copy">${_("Not Linked")}</span>
                 % endif
               </div>
 
@@ -132,7 +132,7 @@
                     ${_("Unlink")}
                   </a>
                 % else:
-                  <a href="${pipeline.get_login_url(state.provider.NAME, pipeline.AUTH_ENTRY_DASHBOARD)}">
+                  <a href="${pipeline.get_login_url(state.provider.NAME, pipeline.AUTH_ENTRY_DASHBOARD, redirect_url='/')}">
                     ## Translators: clicking on this creates a link between a user's edX account and their account with an external authentication provider (like Google or LinkedIn).
                     ${_("Link")}
                   </a>
@@ -143,6 +143,15 @@
             </div>
             % endfor
           </span>
+        </li>
+        % endif
+
+        % if len(order_history_list):
+        <li class="order-history">
+          <span class="title">${_("Order History")}</span>
+          % for order_history_item in order_history_list:
+            <span><a href="${order_history_item['receipt_url']}" target="_blank" class="edit-name">${order_history_item['order_date']}</a></span>
+          % endfor
         </li>
         % endif
 
@@ -165,7 +174,7 @@
 
   </section>
 
-  <section class="my-courses" id="my-courses">
+  <section id="my-courses" class="my-courses" role="main" aria-label="Content">
     <header>
       <h2>${_("Current Courses")}</h2>
     </header>
@@ -180,7 +189,9 @@
             <% show_refund_option = (course.id in show_refund_option_for) %>
             <% is_paid_course = (course.id in enrolled_courses_either_paid) %>
             <% is_course_blocked = (course.id in block_courses) %>
-            <%include file='dashboard/_dashboard_course_listing.html' args="course=course, enrollment=enrollment, show_courseware_link=show_courseware_link, cert_status=cert_status, show_email_settings=show_email_settings, course_mode_info=course_mode_info, show_refund_option = show_refund_option, is_paid_course = is_paid_course, is_course_blocked = is_course_blocked" />
+            <% course_verification_status = verification_status_by_course.get(course.id, {}) %>
+            <% course_requirements = courses_requirements_not_met.get(course.id) %>
+            <%include file='dashboard/_dashboard_course_listing.html' args="course=course, enrollment=enrollment, show_courseware_link=show_courseware_link, cert_status=cert_status, show_email_settings=show_email_settings, course_mode_info=course_mode_info, show_refund_option = show_refund_option, is_paid_course = is_paid_course, is_course_blocked = is_course_blocked, verification_status=course_verification_status, course_requirements=course_requirements" />
       % endfor
 
       </ul>
@@ -218,7 +229,7 @@
 <section id="email-settings-modal" class="modal" aria-hidden="true">
   <div class="inner-wrapper" role="dialog" aria-labelledby="email-settings-title">
     <button class="close-modal">
-      <i class="icon-remove"></i>
+      <i class="icon fa fa-remove"></i>
       <span class="sr">
         ## Translators: this is a control to allow users to exit out of this modal interface (a menu or piece of UI that takes the full focus of the screen)
         ${_("Close")}
@@ -251,7 +262,7 @@
 <section id="password_reset_complete" class="modal" aria-hidden="true">
   <div class="inner-wrapper" role="dialog" aria-labelledby="password-reset-email">
     <button class="close-modal">
-      <i class="icon-remove"></i>
+      <i class="icon fa fa-remove"></i>
       <span class="sr">
         ## Translators: this is a control to allow users to exit out of this modal interface (a menu or piece of UI that takes the full focus of the screen)
         ${_("Close")}
@@ -281,7 +292,7 @@
 <section id="change_email" class="modal" aria-hidden="true">
   <div class="inner-wrapper" role="dialog" aria-labelledby="change_email_title">
     <button class="close-modal">
-      <i class="icon-remove"></i>
+      <i class="icon fa fa-remove"></i>
       <span class="sr">
         ## Translators: this is a control to allow users to exit out of this modal interface (a menu or piece of UI that takes the full focus of the screen)
         ${_("Close")}
@@ -301,12 +312,13 @@
     <div id="change_email_body">
       <form id="change_email_form">
         <div id="change_email_error" class="modal-form-error"> </div>
-        <fieldset>
           <div class="input-group">
-            <label>${_("Please enter your new email address:")}</label>
-            <input id="new_email_field" type="email" value="" />
-            <label>${_("Please confirm your password:")}</label>
-            <input id="new_email_password" value="" type="password" />
+            <label>${_("Please enter your new email address:")}
+              <input id="new_email_field" type="email" value="" />
+            </label>
+            <label>${_("Please confirm your password:")}
+              <input id="new_email_password" value="" type="password" />
+            </label>
           </div>
           <section>
             <p>${_("We will send a confirmation to both {email} and your new email address as part of the process.").format(email=user.email)}</p>
@@ -314,7 +326,6 @@
           <div class="submit">
             <input type="submit" id="submit_email_change" value="${_("Change Email")}"/>
           </div>
-        </fieldset>
       </form>
     </div>
   </div>
@@ -325,7 +336,7 @@
 <section id="apply_name_change" class="modal" aria-hidden="true">
   <div class="inner-wrapper" role="dialog" aria-labelledby="change-name-title">
     <button class="close-modal">
-      <i class="icon-remove"></i>
+      <i class="icon fa fa-remove"></i>
       <span class="sr">
         ## Translators: this is a control to allow users to exit out of this modal interface (a menu or piece of UI that takes the full focus of the screen)
         ${_("Close")}
@@ -348,27 +359,27 @@
         ## Translators: note that {platform} {cert_name_short} will look something like: "edX certificate". Please do not change the order of these placeholders.
         <p>${_("To uphold the credibility of your {platform} {cert_name_short}, all name changes will be recorded.").format(platform=settings.PLATFORM_NAME, cert_name_short=cert_name_short)}</p>
         <br/>
-        <fieldset>
           <div class="input-group">
             ## Translators: note that {platform} {cert_name_short} will look something like: "edX certificate". Please do not change the order of these placeholders.
-            <label>${_("Enter your desired full name, as it will appear on your {platform} {cert_name_short}:").format(platform=settings.PLATFORM_NAME, cert_name_short=cert_name_short)}</label>
-            <input id="new_name_field" value="" type="text" />
-            <label>${_("Reason for name change:")}</label>
-            <textarea id="name_rationale_field" value=""></textarea>
+            <label>${_("Enter your desired full name, as it will appear on your {platform} {cert_name_short}:").format(platform=settings.PLATFORM_NAME, cert_name_short=cert_name_short)}
+              <input id="new_name_field" value="" type="text" />
+            </label>
+            <label>${_("Reason for name change:")}
+              <textarea id="name_rationale_field" value=""></textarea>
+            </label>
           </div>
           <div class="submit">
             <input type="submit" id="submit" value="${_("Change My Name")}">
           </div>
-        </fieldset>
       </form>
     </div>
   </div>
 </section>
 
 <section id="unenroll-modal" class="modal unenroll-modal" aria-hidden="true">
-  <div class="inner-wrapper" role="alertdialog" aria-labelledy="unenrollment-modal-title">
+  <div class="inner-wrapper" role="dialog" aria-labelledby="unenrollment-modal-title">
     <button class="close-modal">
-      <i class="icon-remove"></i>
+      <i class="icon fa fa-remove"></i>
       <span class="sr">
         ## Translators: this is a control to allow users to exit out of this modal interface (a menu or piece of UI that takes the full focus of the screen)
         ${_("Close")}
@@ -377,7 +388,9 @@
 
     <header>
       <h2 id="unenrollment-modal-title">
-        ${_("<span id='track-info'></span> {course_number}?  <span id='refund-info'></span>").format(course_number="<span id='unenroll_course_number'></span>")}
+        <span id='track-info'></span>
+        <span id='unenroll_course_number'></span>?
+        <span id='refund-info'></span>
         <span class="sr">,
           ## Translators: this text gives status on if the modal interface (a menu or piece of UI that takes the full focus of the screen) is open or not
           ${_("window open")}

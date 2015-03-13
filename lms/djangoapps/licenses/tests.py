@@ -15,7 +15,7 @@ from django.core.management import call_command
 from django.core.urlresolvers import reverse
 from nose.tools import assert_true  # pylint: disable=no-name-in-module
 
-from courseware.tests.modulestore_config import TEST_DATA_MONGO_MODULESTORE
+from xmodule.modulestore.tests.django_utils import TEST_DATA_MOCK_MODULESTORE
 from licenses.models import CourseSoftware, UserLicense
 
 from student.tests.factories import UserFactory
@@ -60,6 +60,8 @@ class LicenseTestCase(TestCase):
     '''Tests for licenses.views'''
     def setUp(self):
         '''creates a user and logs in'''
+
+        super(LicenseTestCase, self).setUp()
         # self.setup_viewtest_user()
         self.user = UserFactory(username='test',
                                 email='test@edx.org', password='test_password')
@@ -144,10 +146,11 @@ class LicenseTestCase(TestCase):
         self.assertEqual(302, response.status_code)
 
 
-@override_settings(MODULESTORE=TEST_DATA_MONGO_MODULESTORE)
 class CommandTest(ModuleStoreTestCase):
     '''Test management command for importing serial numbers'''
     def setUp(self):
+        super(CommandTest, self).setUp()
+
         course = CourseFactory.create()
         self.course_id = course.id
 

@@ -10,7 +10,7 @@ from django.test.utils import override_settings
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from courseware.tests.helpers import LoginEnrollmentTestCase
-from courseware.tests.modulestore_config import TEST_DATA_MONGO_MODULESTORE
+from xmodule.modulestore.tests.django_utils import TEST_DATA_MOCK_MODULESTORE
 from xmodule.modulestore.tests.factories import CourseFactory
 from student.tests.factories import UserFactory, CourseEnrollmentFactory, AdminFactory
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
@@ -22,13 +22,13 @@ USER_COUNT = 4
 
 
 @ddt.ddt
-@override_settings(MODULESTORE=TEST_DATA_MONGO_MODULESTORE)
 class TestInstructorEnrollsStudent(ModuleStoreTestCase, LoginEnrollmentTestCase):
     """
     Check Enrollment/Unenrollment with/without auto-enrollment on activation and with/without email notification
     """
 
     def setUp(self):
+        super(TestInstructorEnrollsStudent, self).setUp()
 
         instructor = AdminFactory.create()
         self.client.login(username=instructor.username, password='test')

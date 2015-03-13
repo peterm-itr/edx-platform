@@ -11,6 +11,11 @@ Common traits:
 # want to import all variables from base settings files
 # pylint: disable=wildcard-import, unused-wildcard-import
 
+# Pylint gets confused by path.py instances, which report themselves as class
+# objects. As a result, pylint applies the wrong regex in validating names,
+# and throws spurious errors. Therefore, we disable invalid-name checking.
+# pylint: disable=invalid-name
+
 import json
 
 from .common import *
@@ -146,6 +151,7 @@ SITE_NAME = ENV_TOKENS['SITE_NAME']
 HTTPS = ENV_TOKENS.get('HTTPS', HTTPS)
 SESSION_ENGINE = ENV_TOKENS.get('SESSION_ENGINE', SESSION_ENGINE)
 SESSION_COOKIE_DOMAIN = ENV_TOKENS.get('SESSION_COOKIE_DOMAIN')
+SESSION_COOKIE_HTTPONLY = ENV_TOKENS.get('SESSION_COOKIE_HTTPONLY', True)
 REGISTRATION_EXTRA_FIELDS = ENV_TOKENS.get('REGISTRATION_EXTRA_FIELDS', REGISTRATION_EXTRA_FIELDS)
 SESSION_COOKIE_SECURE = ENV_TOKENS.get('SESSION_COOKIE_SECURE', SESSION_COOKIE_SECURE)
 
@@ -209,6 +215,10 @@ THEME_NAME = ENV_TOKENS.get('THEME_NAME', None)
 
 # Marketing link overrides
 MKTG_URL_LINK_MAP.update(ENV_TOKENS.get('MKTG_URL_LINK_MAP', {}))
+
+
+# Mobile store URL overrides
+MOBILE_STORE_URLS = ENV_TOKENS.get('MOBILE_STORE_URLS', MOBILE_STORE_URLS)
 
 # Timezone overrides
 TIME_ZONE = ENV_TOKENS.get('TIME_ZONE', TIME_ZONE)
@@ -293,6 +303,47 @@ if FEATURES.get('AUTH_USE_CAS'):
 # Video Caching. Pairing country codes with CDN URLs.
 # Example: {'CN': 'http://api.xuetangx.com/edx/video?s3_url='}
 VIDEO_CDN_URL = ENV_TOKENS.get('VIDEO_CDN_URL', {})
+
+############# CORS headers for cross-domain requests #################
+
+if FEATURES.get('ENABLE_CORS_HEADERS') or FEATURES.get('ENABLE_CROSS_DOMAIN_CSRF_COOKIE'):
+    CORS_ALLOW_CREDENTIALS = True
+    CORS_ORIGIN_WHITELIST = ENV_TOKENS.get('CORS_ORIGIN_WHITELIST', ())
+    CORS_ORIGIN_ALLOW_ALL = ENV_TOKENS.get('CORS_ORIGIN_ALLOW_ALL', False)
+    CORS_ALLOW_INSECURE = ENV_TOKENS.get('CORS_ALLOW_INSECURE', False)
+
+    # If setting a cross-domain cookie, it's really important to choose
+    # a name for the cookie that is DIFFERENT than the cookies used
+    # by each subdomain.  For example, suppose the applications
+    # at these subdomains are configured to use the following cookie names:
+    #
+    # 1) foo.example.com --> "csrftoken"
+    # 2) baz.example.com --> "csrftoken"
+    # 3) bar.example.com --> "csrftoken"
+    #
+    # For the cross-domain version of the CSRF cookie, you need to choose
+    # a name DIFFERENT than "csrftoken"; otherwise, the new token configured
+    # for ".example.com" could conflict with the other cookies,
+    # non-deterministically causing 403 responses.
+    #
+    # Because of the way Django stores cookies, the cookie name MUST
+    # be a `str`, not unicode.  Otherwise there will `TypeError`s will be raised
+    # when Django tries to call the unicode `translate()` method with the wrong
+    # number of parameters.
+    CROSS_DOMAIN_CSRF_COOKIE_NAME = str(ENV_TOKENS.get('CROSS_DOMAIN_CSRF_COOKIE_NAME'))
+
+    # When setting the domain for the "cross-domain" version of the CSRF
+    # cookie, you should choose something like: ".example.com"
+    # (note the leading dot), where both the referer and the host
+    # are subdomains of "example.com".
+    #
+    # Browser security rules require that
+    # the cookie domain matches the domain of the server; otherwise
+    # the cookie won't get set.  And once the cookie gets set, the client
+    # needs to be on a domain that matches the cookie domain, otherwise
+    # the client won't be able to read the cookie.
+    CROSS_DOMAIN_CSRF_COOKIE_DOMAIN = ENV_TOKENS.get('CROSS_DOMAIN_CSRF_COOKIE_DOMAIN')
+
 
 ############################## SECURE AUTH ITEMS ###############
 # Secret things: passwords, access keys, etc.
@@ -397,8 +448,15 @@ STUDENT_FILEUPLOAD_MAX_SIZE = ENV_TOKENS.get("STUDENT_FILEUPLOAD_MAX_SIZE", STUD
 # Event tracking
 TRACKING_BACKENDS.update(AUTH_TOKENS.get("TRACKING_BACKENDS", {}))
 EVENT_TRACKING_BACKENDS.update(AUTH_TOKENS.get("EVENT_TRACKING_BACKENDS", {}))
-TRACKING_SEGMENTIO_WEBHOOK_SECRET = AUTH_TOKENS.get("TRACKING_SEGMENTIO_WEBHOOK_SECRET", TRACKING_SEGMENTIO_WEBHOOK_SECRET)
+TRACKING_SEGMENTIO_WEBHOOK_SECRET = AUTH_TOKENS.get(
+    "TRACKING_SEGMENTIO_WEBHOOK_SECRET",
+    TRACKING_SEGMENTIO_WEBHOOK_SECRET
+)
 TRACKING_SEGMENTIO_ALLOWED_TYPES = ENV_TOKENS.get("TRACKING_SEGMENTIO_ALLOWED_TYPES", TRACKING_SEGMENTIO_ALLOWED_TYPES)
+TRACKING_SEGMENTIO_DISALLOWED_SUBSTRING_NAMES = ENV_TOKENS.get(
+    "TRACKING_SEGMENTIO_DISALLOWED_SUBSTRING_NAMES",
+    TRACKING_SEGMENTIO_DISALLOWED_SUBSTRING_NAMES
+)
 TRACKING_SEGMENTIO_SOURCE_MAP = ENV_TOKENS.get("TRACKING_SEGMENTIO_SOURCE_MAP", TRACKING_SEGMENTIO_SOURCE_MAP)
 
 # Student identity verification settings
@@ -464,3 +522,39 @@ REGISTRATION_CODE_LENGTH = ENV_TOKENS.get('REGISTRATION_CODE_LENGTH', 8)
 # REGISTRATION CODES DISPLAY INFORMATION
 INVOICE_CORP_ADDRESS = ENV_TOKENS.get('INVOICE_CORP_ADDRESS', INVOICE_CORP_ADDRESS)
 INVOICE_PAYMENT_INSTRUCTIONS = ENV_TOKENS.get('INVOICE_PAYMENT_INSTRUCTIONS', INVOICE_PAYMENT_INSTRUCTIONS)
+
+#date format the api will be formatting the datetime values
+API_DATE_FORMAT = '%Y-%m-%d'
+API_DATE_FORMAT = ENV_TOKENS.get('API_DATE_FORMAT', API_DATE_FORMAT)
+
+# Enrollment API Cache Timeout
+ENROLLMENT_COURSE_DETAILS_CACHE_TIMEOUT = ENV_TOKENS.get('ENROLLMENT_COURSE_DETAILS_CACHE_TIMEOUT', 60)
+
+# PDF RECEIPT/INVOICE OVERRIDES
+PDF_RECEIPT_TAX_ID = ENV_TOKENS.get('PDF_RECEIPT_TAX_ID', PDF_RECEIPT_TAX_ID)
+PDF_RECEIPT_FOOTER_TEXT = ENV_TOKENS.get('PDF_RECEIPT_FOOTER_TEXT', PDF_RECEIPT_FOOTER_TEXT)
+PDF_RECEIPT_DISCLAIMER_TEXT = ENV_TOKENS.get('PDF_RECEIPT_DISCLAIMER_TEXT', PDF_RECEIPT_DISCLAIMER_TEXT)
+PDF_RECEIPT_BILLING_ADDRESS = ENV_TOKENS.get('PDF_RECEIPT_BILLING_ADDRESS', PDF_RECEIPT_BILLING_ADDRESS)
+PDF_RECEIPT_TERMS_AND_CONDITIONS = ENV_TOKENS.get('PDF_RECEIPT_TERMS_AND_CONDITIONS', PDF_RECEIPT_TERMS_AND_CONDITIONS)
+PDF_RECEIPT_TAX_ID_LABEL = ENV_TOKENS.get('PDF_RECEIPT_TAX_ID_LABEL', PDF_RECEIPT_TAX_ID_LABEL)
+PDF_RECEIPT_LOGO_PATH = ENV_TOKENS.get('PDF_RECEIPT_LOGO_PATH', PDF_RECEIPT_LOGO_PATH)
+PDF_RECEIPT_COBRAND_LOGO_PATH = ENV_TOKENS.get('PDF_RECEIPT_COBRAND_LOGO_PATH', PDF_RECEIPT_COBRAND_LOGO_PATH)
+PDF_RECEIPT_LOGO_HEIGHT_MM = ENV_TOKENS.get('PDF_RECEIPT_LOGO_HEIGHT_MM', PDF_RECEIPT_LOGO_HEIGHT_MM)
+PDF_RECEIPT_COBRAND_LOGO_HEIGHT_MM = ENV_TOKENS.get(
+    'PDF_RECEIPT_COBRAND_LOGO_HEIGHT_MM', PDF_RECEIPT_COBRAND_LOGO_HEIGHT_MM
+)
+
+if FEATURES.get('ENABLE_COURSEWARE_SEARCH'):
+    # Use ElasticSearch as the search engine herein
+    SEARCH_ENGINE = "search.elastic.ElasticSearchEngine"
+
+# Facebook app
+FACEBOOK_API_VERSION = AUTH_TOKENS.get("FACEBOOK_API_VERSION")
+FACEBOOK_APP_SECRET = AUTH_TOKENS.get("FACEBOOK_APP_SECRET")
+FACEBOOK_APP_ID = AUTH_TOKENS.get("FACEBOOK_APP_ID")
+
+XBLOCK_SETTINGS = ENV_TOKENS.get('XBLOCK_SETTINGS', {})
+
+##### CDN EXPERIMENT/MONITORING FLAGS #####
+PERFORMANCE_GRAPHITE_URL = ENV_TOKENS.get('PERFORMANCE_GRAPHITE_URL', PERFORMANCE_GRAPHITE_URL)
+CDN_VIDEO_URLS = ENV_TOKENS.get('CDN_VIDEO_URLS', CDN_VIDEO_URLS)

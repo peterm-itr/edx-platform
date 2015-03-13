@@ -9,6 +9,8 @@ from bok_choy.page_object import PageObject
 from bok_choy.promise import EmptyPromise, Promise
 from bok_choy.javascript import wait_for_js, js_defined
 
+import logging
+log = logging.getLogger('VideoPage')
 
 VIDEO_BUTTONS = {
     'CC': '.hide-subtitles',
@@ -354,10 +356,6 @@ class VideoPage(PageObject):
 
         self.q(css=button_selector).first.click()
 
-        button_states = {'play': 'playing', 'pause': 'pause'}
-        if button in button_states:
-            self.wait_for_state(button_states[button])
-
         self.wait_for_ajax()
 
     def _get_element_dimensions(self, selector):
@@ -661,6 +659,11 @@ class VideoPage(PageObject):
         state_selector = self.get_element_selector(CSS_CLASS_NAMES['video_container'])
         current_state = self.q(css=state_selector).attrs('class')[0]
 
+        # For troubleshooting purposes show what the current state is.
+        # The debug statements will only be displayed in the event of a failure.
+        logging.debug("Current state of '{}' element is '{}'".format(state_selector, current_state))
+
+        # See the JS video player's onStateChange function
         if 'is-playing' in current_state:
             return 'playing'
         elif 'is-paused' in current_state:
@@ -670,7 +673,7 @@ class VideoPage(PageObject):
         elif 'is-ended' in current_state:
             return 'finished'
 
-    def _wait_for(self, check_func, desc, result=False, timeout=200):
+    def _wait_for(self, check_func, desc, result=False, timeout=200, try_interval=0.2):
         """
         Calls the method provided as an argument until the Promise satisfied or BrokenPromise
 
@@ -682,9 +685,9 @@ class VideoPage(PageObject):
 
         """
         if result:
-            return Promise(check_func, desc, timeout=timeout).fulfill()
+            return Promise(check_func, desc, timeout=timeout, try_interval=try_interval).fulfill()
         else:
-            return EmptyPromise(check_func, desc, timeout=timeout).fulfill()
+            return EmptyPromise(check_func, desc, timeout=timeout, try_interval=try_interval).fulfill()
 
     def wait_for_state(self, state):
         """
