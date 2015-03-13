@@ -8,10 +8,6 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'UserProfile.phone'
-        db.add_column('auth_userprofile', 'phone',
-                      self.gf('django.db.models.fields.TextField')(null=True, blank=True),
-                      keep_default=False)
 
         # Adding field 'UserProfile.is_representative'
         db.add_column('auth_userprofile', 'is_representative',
@@ -25,8 +21,6 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
-        # Deleting field 'UserProfile.phone'
-        db.delete_column('auth_userprofile', 'phone')
 
         # Deleting field 'UserProfile.is_representative'
         db.delete_column('auth_userprofile', 'is_representative')
