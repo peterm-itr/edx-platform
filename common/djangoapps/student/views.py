@@ -3,6 +3,7 @@ Student Views
 """
 import datetime
 import logging
+from django.core.exceptions import ObjectDoesNotExist
 import re
 import uuid
 import time
@@ -1333,7 +1334,7 @@ def user_signup_handler(sender, **kwargs):  # pylint: disable=unused-argument
             log.info(u'user {} originated from a white labeled "Microsite"'.format(kwargs['instance'].id))
 
 
-def _do_create_account(form):
+def _do_create_account(form, params=None):
     """
     Given cleaned post variables, create the User and UserProfile objects, as well as the
     registration for this user.
@@ -1347,8 +1348,8 @@ def _do_create_account(form):
 
     user = User(
         username=form.cleaned_data["username"],
-        email=form.cleaned_data["email"],
-        is_active=False
+        email=form.cleaned_data["email"] or ('{}@example.com'.format(form.cleaned_data["username"])),
+        is_active=(len(form.cleaned_data["email"]) == 0)
     )
     user.set_password(form.cleaned_data["password"])
     registration = Registration()
@@ -1390,6 +1391,33 @@ def _do_create_account(form):
     extended_profile = form.cleaned_extended_profile
     if extended_profile:
         profile.meta = json.dumps(extended_profile)
+
+    if 'is_representative' in params:
+        company = Company(title = params['company_title'])
+        company.address = params['company_address']
+        company.real_address = params['company_real_address']
+        company.inn = params['company_inn']
+        company.kpk = params['company_kpk']
+        company.ceo_name = params['company_ceo_name']
+        company.email = params['company_email']
+        company.phone = params['company_phone']
+
+        try:
+            company.save()
+        except Exception: #pylint: disable=broad-except
+            log.exception("Company creation failed for user {id}.".format(id=user.id))
+            raise
+
+        profile.is_representative = True
+        profile.company = company
+
+    if 'company_id' in params:
+        try:
+            company = Company.objects.get(id=params['company_id'])
+            profile.company = company
+        except (KeyError, ObjectDoesNotExist):
+            pass
+
     try:
         profile.save()
     except Exception:  # pylint: disable=broad-except
@@ -1473,7 +1501,7 @@ def create_account_with_params(request, params):
     )
 
     with transaction.commit_on_success():
-        ret = _do_create_account(form)
+        ret = _do_create_account(form, params)
 
     (user, profile, registration) = ret
 
