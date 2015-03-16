@@ -198,7 +198,8 @@ def company_progress(request, company_id):
             except KeyError:
                 courses_data[enrollment.course_id] = {
                     'course': course,
-                    'students': []
+                    'students': [],
+                    'ordered_grades': sorted(course.grade_cutoffs.items(), key=lambda i: i[1], reverse=True),
                 }
 
             courses_data[enrollment.course_id]['students'].append({

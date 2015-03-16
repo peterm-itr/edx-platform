@@ -13,7 +13,7 @@
     <h1>${_('Company Progress')}</h1>
     <h2>${_('Company:')} ${company.title}</h2>
 
-    <%def name="percent_data(fraction)">
+    <%def name="percent_data(fraction, ordered_grades)">
         <%
             letter_grade = 'None'
             if fraction > 0:
@@ -56,9 +56,9 @@
                         <tr>
                             <td>${student['real_name']}</td>
                             % for section in student['grades']['section_breakdown']:
-                                ${percent_data( section['percent'] )}
+                                ${percent_data( section['percent'], course_data['ordered_grades'] )}
                             % endfor
-                            ${percent_data( student['grades']['percent'])}
+                            ${percent_data( student['grades']['percent'], course_data['ordered_grades'] )}
                         </tr>
                     % endfor
                     </tbody>
