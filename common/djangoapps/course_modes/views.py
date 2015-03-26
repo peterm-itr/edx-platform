@@ -3,8 +3,11 @@ Views for the course_mode module
 """
 
 import decimal
+from ipware.ip import get_ip
+
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseBadRequest
+from django.conf import settings
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect
 from django.views.generic.base import View
 from django.utils.translation import ugettext as _
@@ -20,6 +23,8 @@ from opaque_keys.edx.locations import SlashSeparatedCourseKey
 from opaque_keys.edx.keys import CourseKey
 from util.db import commit_on_success_with_read_committed
 from xmodule.modulestore.django import modulestore
+
+from embargo import api as embargo_api
 
 
 class ChooseModeView(View):
@@ -51,21 +56,29 @@ class ChooseModeView(View):
         """
         course_key = CourseKey.from_string(course_id)
 
-        upgrade = request.GET.get('upgrade', False)
-        request.session['attempting_upgrade'] = upgrade
+        # Check whether the user has access to this course
+        # based on country access rules.
+        embargo_redirect = embargo_api.redirect_if_blocked(
+            course_key,
+            user=request.user,
+            ip_address=get_ip(request),
+            url=request.path
+        )
+        if embargo_redirect:
+            return redirect(embargo_redirect)
 
         enrollment_mode, is_active = CourseEnrollment.enrollment_mode_for_user(request.user, course_key)
         modes = CourseMode.modes_for_course_dict(course_key)
 
         # We assume that, if 'professional' is one of the modes, it is the *only* mode.
         # If we offer more modes alongside 'professional' in the future, this will need to route
-        # to the usual "choose your track" page.
-        has_enrolled_professional = (enrollment_mode == "professional" and is_active)
-        if "professional" in modes and not has_enrolled_professional:
+        # to the usual "choose your track" page same is true for no-id-professional mode.
+        has_enrolled_professional = (CourseMode.is_professional_slug(enrollment_mode) and is_active)
+        if CourseMode.has_professional_mode(modes) and not has_enrolled_professional:
             return redirect(
                 reverse(
-                    'verify_student_show_requirements',
-                    kwargs={'course_id': course_key.to_deprecated_string()}
+                    'verify_student_start_flow',
+                    kwargs={'course_id': unicode(course_key)}
                 )
             )
 
@@ -77,7 +90,7 @@ class ChooseModeView(View):
             return redirect(reverse('dashboard'))
 
         # If a user has already paid, redirect them to the dashboard.
-        if is_active and enrollment_mode in CourseMode.VERIFIED_MODES:
+        if is_active and (enrollment_mode in CourseMode.VERIFIED_MODES + [CourseMode.NO_ID_PROFESSIONAL_MODE]):
             return redirect(reverse('dashboard'))
 
         donation_for_course = request.session.get("donation_for_course", {})
@@ -92,7 +105,6 @@ class ChooseModeView(View):
             "course_num": course.display_number_with_default,
             "chosen_price": chosen_price,
             "error": error,
-            "upgrade": upgrade,
             "can_audit": "audit" in modes,
             "responsive": True
         }
@@ -135,8 +147,6 @@ class ChooseModeView(View):
             error_msg = _("Enrollment is closed")
             return self.get(request, course_id, error=error_msg)
 
-        upgrade = request.GET.get('upgrade', False)
-
         requested_mode = self._get_requested_mode(request.POST)
 
         allowed_modes = CourseMode.modes_for_course_dict(course_key)
@@ -172,8 +182,11 @@ class ChooseModeView(View):
             request.session["donation_for_course"] = donation_for_course
 
             return redirect(
-                reverse('verify_student_show_requirements',
-                        kwargs={'course_id': course_key.to_deprecated_string()}) + "?upgrade={}".format(upgrade))
+                reverse(
+                    'verify_student_start_flow',
+                    kwargs={'course_id': unicode(course_key)}
+                )
+            )
 
     def _get_requested_mode(self, request_dict):
         """Get the user's requested mode
@@ -192,3 +205,48 @@ class ChooseModeView(View):
             return 'honor'
         else:
             return None
+
+
+def create_mode(request, course_id):
+    """Add a mode to the course corresponding to the given course ID.
+
+    Only available when settings.FEATURES['MODE_CREATION_FOR_TESTING'] is True.
+
+    Attempts to use the following querystring parameters from the request:
+        `mode_slug` (str): The mode to add, either 'honor', 'verified', or 'professional'
+        `mode_display_name` (str): Describes the new course mode
+        `min_price` (int): The minimum price a user must pay to enroll in the new course mode
+        `suggested_prices` (str): Comma-separated prices to suggest to the user.
+        `currency` (str): The currency in which to list prices.
+
+    By default, this endpoint will create an 'honor' mode for the given course with display name
+    'Honor Code', a minimum price of 0, no suggested prices, and using USD as the currency.
+
+    Args:
+        request (`Request`): The Django Request object.
+        course_id (unicode): A course ID.
+
+    Returns:
+        Response
+    """
+    PARAMETERS = {
+        'mode_slug': u'honor',
+        'mode_display_name': u'Honor Code Certificate',
+        'min_price': 0,
+        'suggested_prices': u'',
+        'currency': u'usd',
+    }
+
+    # Try pulling querystring parameters out of the request
+    for parameter, default in PARAMETERS.iteritems():
+        PARAMETERS[parameter] = request.GET.get(parameter, default)
+
+    # Attempt to create the new mode for the given course
+    course_key = CourseKey.from_string(course_id)
+    CourseMode.objects.get_or_create(course_id=course_key, **PARAMETERS)
+
+    # Return a success message and a 200 response
+    return HttpResponse("Mode '{mode_slug}' created for '{course}'.".format(
+        mode_slug=PARAMETERS['mode_slug'],
+        course=course_id
+    ))

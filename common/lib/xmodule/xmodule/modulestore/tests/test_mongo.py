@@ -29,9 +29,10 @@ from xmodule.modulestore import ModuleStoreEnum
 from xmodule.modulestore.mongo import MongoKeyValueStore
 from xmodule.modulestore.draft import DraftModuleStore
 from opaque_keys.edx.locations import SlashSeparatedCourseKey, AssetLocation
+from opaque_keys.edx.locator import LibraryLocator, CourseLocator
 from opaque_keys.edx.keys import UsageKey
-from xmodule.modulestore.xml_exporter import export_to_xml
-from xmodule.modulestore.xml_importer import import_from_xml, perform_xlint
+from xmodule.modulestore.xml_exporter import export_course_to_xml
+from xmodule.modulestore.xml_importer import import_course_from_xml, perform_xlint
 from xmodule.contentstore.mongo import MongoContentStore
 
 from nose.tools import assert_in
@@ -41,6 +42,8 @@ from xmodule.x_module import XModuleMixin
 from xmodule.modulestore.mongo.base import as_draft
 from xmodule.modulestore.tests.mongo_connection import MONGO_PORT_NUM, MONGO_HOST
 from xmodule.modulestore.edit_info import EditInfoMixin
+from xmodule.modulestore.exceptions import ItemNotFoundError
+
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +54,7 @@ COLLECTION = 'modulestore'
 ASSET_COLLECTION = 'assetstore'
 FS_ROOT = DATA_DIR  # TODO (vshnayder): will need a real fs_root for testing load_item
 DEFAULT_CLASS = 'xmodule.raw_module.RawDescriptor'
-RENDER_TEMPLATE = lambda t_n, d, ctx = None, nsp = 'main': ''
+RENDER_TEMPLATE = lambda t_n, d, ctx=None, nsp='main': ''
 
 
 class ReferenceTestXBlock(XBlock, XModuleMixin):
@@ -88,7 +91,6 @@ class TestMongoModuleStoreBase(unittest.TestCase):
 
     @classmethod
     def teardownClass(cls):
-#         cls.patcher.stop()
         if cls.connection:
             cls.connection.drop_database(DB)
             cls.connection.close()
@@ -125,7 +127,7 @@ class TestMongoModuleStoreBase(unittest.TestCase):
             xblock_mixins=(EditInfoMixin,)
 
         )
-        import_from_xml(
+        import_course_from_xml(
             draft_store,
             999,
             DATA_DIR,
@@ -134,7 +136,7 @@ class TestMongoModuleStoreBase(unittest.TestCase):
         )
 
         # also test a course with no importing of static content
-        import_from_xml(
+        import_course_from_xml(
             draft_store,
             999,
             DATA_DIR,
@@ -151,13 +153,9 @@ class TestMongoModuleStoreBase(unittest.TestCase):
         # Destroy the test db.
         connection.drop_database(DB)
 
-    @classmethod
-    def setUp(cls):
-        cls.dummy_user = ModuleStoreEnum.UserID.test
-
-    @classmethod
-    def tearDown(cls):
-        pass
+    def setUp(self):
+        super(TestMongoModuleStoreBase, self).setUp()
+        self.dummy_user = ModuleStoreEnum.UserID.test
 
 
 class TestMongoModuleStore(TestMongoModuleStoreBase):
@@ -235,6 +233,16 @@ class TestMongoModuleStore(TestMongoModuleStoreBase):
             )
             assert_false(self.draft_store.has_course(mix_cased))
             assert_false(self.draft_store.has_course(mix_cased, ignore_case=True))
+
+    def test_has_course_with_library(self):
+        """
+        Test that has_course() returns False when called with a LibraryLocator.
+        This is required because MixedModuleStore will use has_course() to check
+        where a given library are stored.
+        """
+        lib_key = LibraryLocator("TestOrg", "TestLib")
+        result = self.draft_store.has_course(lib_key)
+        assert_false(result)
 
     def test_loads(self):
         assert_not_none(
@@ -321,6 +329,10 @@ class TestMongoModuleStore(TestMongoModuleStoreBase):
         location = Location('edX', 'toy', '2012_Fall', 'course', '2012_Fall')
         course_content, __ = self.content_store.get_all_content_for_course(location.course_key)
         assert_true(len(course_content) > 0)
+        filter_params = _build_requested_filter('Images')
+        filtered_course_content, __ = self.content_store.get_all_content_for_course(
+            location.course_key, filter_params=filter_params)
+        assert_true(len(filtered_course_content) < len(course_content))
         # a bit overkill, could just do for content[0]
         for content in course_content:
             assert not content.get('locked', False)
@@ -410,7 +422,7 @@ class TestMongoModuleStore(TestMongoModuleStoreBase):
         assert_equals(len(course_locations), 1)
         assert_in(SlashSeparatedCourseKey('edX', 'simple', '2012_Fall'), course_locations)
 
-    @Plugin.register_temp_plugin(ReferenceTestXBlock, 'ref_test')
+    @XBlock.register_temp_plugin(ReferenceTestXBlock, 'ref_test')
     def test_reference_converters(self):
         """
         Test that references types get deserialized correctly
@@ -502,7 +514,7 @@ class TestMongoModuleStore(TestMongoModuleStoreBase):
 
         root_dir = path(mkdtemp())
         try:
-            export_to_xml(self.draft_store, self.content_store, course_key, root_dir, 'test_export')
+            export_course_to_xml(self.draft_store, self.content_store, course_key, root_dir, 'test_export')
             assert_true(path(root_dir / 'test_export/static/images/course_image.jpg').isfile())
             assert_true(path(root_dir / 'test_export/static/images_course_image.jpg').isfile())
         finally:
@@ -518,7 +530,7 @@ class TestMongoModuleStore(TestMongoModuleStoreBase):
 
         root_dir = path(mkdtemp())
         try:
-            export_to_xml(self.draft_store, self.content_store, course.id, root_dir, 'test_export')
+            export_course_to_xml(self.draft_store, self.content_store, course.id, root_dir, 'test_export')
             assert_true(path(root_dir / 'test_export/static/just_a_test.jpg').isfile())
             assert_false(path(root_dir / 'test_export/static/images/course_image.jpg').isfile())
         finally:
@@ -532,7 +544,7 @@ class TestMongoModuleStore(TestMongoModuleStoreBase):
         course = self.draft_store.get_course(SlashSeparatedCourseKey('edX', 'simple_with_draft', '2012_Fall'))
         root_dir = path(mkdtemp())
         try:
-            export_to_xml(self.draft_store, self.content_store, course.id, root_dir, 'test_export')
+            export_course_to_xml(self.draft_store, self.content_store, course.id, root_dir, 'test_export')
             assert_false(path(root_dir / 'test_export/static/images/course_image.jpg').isfile())
             assert_false(path(root_dir / 'test_export/static/images_course_image.jpg').isfile())
         finally:
@@ -658,11 +670,43 @@ class TestMongoModuleStore(TestMongoModuleStoreBase):
 
         root_dir = path(mkdtemp())
 
-        # export_to_xml should work.
+        # export_course_to_xml should work.
         try:
-            export_to_xml(self.draft_store, self.content_store, interface_location.course_key, root_dir, 'test_export')
+            export_course_to_xml(
+                self.draft_store, self.content_store, interface_location.course_key,
+                root_dir, 'test_export'
+            )
         finally:
             shutil.rmtree(root_dir)
+
+    def test_draft_modulestore_create_child_with_position(self):
+        """
+        This test is designed to hit a specific set of use cases having to do with
+        the child positioning logic found in mongo/base.py:create_child()
+        """
+        # Set up the draft module store
+        course = self.draft_store.create_course("TestX", "ChildTest", "1234_A1", 1)
+        first_child = self.draft_store.create_child(
+            self.dummy_user,
+            course.location,
+            "chapter",
+            block_id=course.location.block_id
+        )
+        second_child = self.draft_store.create_child(
+            self.dummy_user,
+            course.location,
+            "chapter",
+            block_id=course.location.block_id,
+            position=0
+        )
+
+        # First child should have been moved to second position, and better child takes the lead
+        course = self.draft_store.get_course(course.id)
+        self.assertEqual(unicode(course.children[1]), unicode(first_child.location))
+        self.assertEqual(unicode(course.children[0]), unicode(second_child.location))
+
+        # Clean up the data so we don't break other tests which apparently expect a particular state
+        self.draft_store.delete_course(course.id, self.dummy_user)
 
 
 class TestMongoModuleStoreWithNoAssetCollection(TestMongoModuleStore):
@@ -691,24 +735,31 @@ class TestMongoModuleStoreWithNoAssetCollection(TestMongoModuleStore):
         # Confirm that no specified asset collection name means empty asset metadata.
         self.assertEquals(self.draft_store.get_all_asset_metadata(course.id, 'asset'), [])
 
+    def test_no_asset_invalid_key(self):
+        course_key = CourseLocator(org="edx3", course="test_course", run=None, deprecated=True)
+        # Confirm that invalid course key raises ItemNotFoundError
+        self.assertRaises(ItemNotFoundError, lambda: self.draft_store.get_all_asset_metadata(course_key, 'asset')[:1])
 
-class TestMongoKeyValueStore(object):
+
+class TestMongoKeyValueStore(unittest.TestCase):
     """
     Tests for MongoKeyValueStore.
     """
 
     def setUp(self):
+        super(TestMongoKeyValueStore, self).setUp()
         self.data = {'foo': 'foo_value'}
         self.course_id = SlashSeparatedCourseKey('org', 'course', 'run')
+        self.parent = self.course_id.make_usage_key('parent', 'p')
         self.children = [self.course_id.make_usage_key('child', 'a'), self.course_id.make_usage_key('child', 'b')]
         self.metadata = {'meta': 'meta_val'}
-        self.kvs = MongoKeyValueStore(self.data, self.children, self.metadata)
+        self.kvs = MongoKeyValueStore(self.data, self.parent, self.children, self.metadata)
 
     def test_read(self):
         assert_equals(self.data['foo'], self.kvs.get(KeyValueStore.Key(Scope.content, None, None, 'foo')))
+        assert_equals(self.parent, self.kvs.get(KeyValueStore.Key(Scope.parent, None, None, 'parent')))
         assert_equals(self.children, self.kvs.get(KeyValueStore.Key(Scope.children, None, None, 'children')))
         assert_equals(self.metadata['meta'], self.kvs.get(KeyValueStore.Key(Scope.settings, None, None, 'meta')))
-        assert_equals(None, self.kvs.get(KeyValueStore.Key(Scope.parent, None, None, 'parent')))
 
     def test_read_invalid_scope(self):
         for scope in (Scope.preferences, Scope.user_info, Scope.user_state):
@@ -718,7 +769,7 @@ class TestMongoKeyValueStore(object):
             assert_false(self.kvs.has(key))
 
     def test_read_non_dict_data(self):
-        self.kvs = MongoKeyValueStore('xml_data', self.children, self.metadata)
+        self.kvs = MongoKeyValueStore('xml_data', self.parent, self.children, self.metadata)
         assert_equals('xml_data', self.kvs.get(KeyValueStore.Key(Scope.content, None, None, 'data')))
 
     def _check_write(self, key, value):
@@ -729,9 +780,10 @@ class TestMongoKeyValueStore(object):
         yield (self._check_write, KeyValueStore.Key(Scope.content, None, None, 'foo'), 'new_data')
         yield (self._check_write, KeyValueStore.Key(Scope.children, None, None, 'children'), [])
         yield (self._check_write, KeyValueStore.Key(Scope.settings, None, None, 'meta'), 'new_settings')
+        # write Scope.parent raises InvalidScope, which is covered in test_write_invalid_scope
 
     def test_write_non_dict_data(self):
-        self.kvs = MongoKeyValueStore('xml_data', self.children, self.metadata)
+        self.kvs = MongoKeyValueStore('xml_data', self.parent, self.children, self.metadata)
         self._check_write(KeyValueStore.Key(Scope.content, None, None, 'data'), 'new_data')
 
     def test_write_invalid_scope(self):
@@ -759,3 +811,35 @@ class TestMongoKeyValueStore(object):
         for scope in (Scope.preferences, Scope.user_info, Scope.user_state, Scope.parent):
             with assert_raises(InvalidScopeError):
                 self.kvs.delete(KeyValueStore.Key(scope, None, None, 'foo'))
+
+
+def _build_requested_filter(requested_filter):
+    """
+    Returns requested filter_params string.
+    """
+
+    # Files and Uploads type filter values
+    all_filters = {
+        "Images": ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/tiff', 'image/tif', 'image/x-icon'],
+        "Documents": [
+            'application/pdf',
+            'text/plain',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'application/vnd.openxmlformats-officedocument.presentationml.slideshow',
+            'application/vnd.openxmlformats-officedocument.presentationml.template',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.template',
+            'application/msword',
+            'application/vnd.ms-excel',
+            'application/vnd.ms-powerpoint',
+        ],
+    }
+    requested_file_types = all_filters.get(requested_filter, None)
+    where = ["JSON.stringify(this.contentType).toUpperCase() == JSON.stringify('{}').toUpperCase()".format(
+        req_filter) for req_filter in requested_file_types]
+    filter_params = {
+        "$where": ' || '.join(where),
+    }
+    return filter_params

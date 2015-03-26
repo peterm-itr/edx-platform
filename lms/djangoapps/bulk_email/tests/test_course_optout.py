@@ -3,6 +3,7 @@
 Unit tests for student optouts from course email
 """
 import json
+from mock import patch, Mock
 
 from django.core import mail
 from django.core.management import call_command
@@ -10,16 +11,14 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.test.utils import override_settings
 
-from courseware.tests.tests import TEST_DATA_MONGO_MODULESTORE
+from xmodule.modulestore.tests.django_utils import TEST_DATA_MOCK_MODULESTORE
 from student.tests.factories import UserFactory, AdminFactory, CourseEnrollmentFactory
 from student.models import CourseEnrollment
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 from xmodule.modulestore.tests.factories import CourseFactory
 
-from mock import patch
 
-
-@override_settings(MODULESTORE=TEST_DATA_MONGO_MODULESTORE)
+@patch('bulk_email.models.html_to_text', Mock(return_value='Mocking CourseEmail.text_message'))
 class TestOptoutCourseEmails(ModuleStoreTestCase):
 
     """
@@ -27,6 +26,7 @@ class TestOptoutCourseEmails(ModuleStoreTestCase):
     """
 
     def setUp(self):
+        super(TestOptoutCourseEmails, self).setUp()
         course_title = u"ẗëṡẗ title ｲ乇丂ｲ ﾶ乇丂丂ﾑg乇 ｷo尺 ﾑﾚﾚ тэѕт мэѕѕаБэ"
         self.course = CourseFactory.create(display_name=course_title)
         self.instructor = AdminFactory.create()

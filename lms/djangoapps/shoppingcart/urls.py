@@ -1,7 +1,9 @@
 from django.conf.urls import patterns, url
 from django.conf import settings
 
-urlpatterns = patterns('shoppingcart.views',  # nopep8
+urlpatterns = patterns(
+    'shoppingcart.views',
+
     url(r'^postpay_callback/$', 'postpay_callback'),  # Both the ~accept and ~reject callback pages are handled here
     url(r'^receipt/(?P<ordernum>[0-9]*)/$', 'show_receipt'),
     url(r'^donation/$', 'donate', name='donation'),
@@ -16,7 +18,7 @@ urlpatterns = patterns('shoppingcart.views',  # nopep8
     url(r'^update_user_cart/$', 'update_user_cart'),
     url(r'^reset_code_redemption/$', 'reset_code_redemption'),
     url(r'^billing_details/$', 'billing_details', name='billing_details'),
-    url(r'^register_courses/$', 'register_courses'),
+    url(r'^verify_cart/$', 'verify_cart'),
 )
 
 if settings.FEATURES.get('ENABLE_PAYMENT_FAKE'):

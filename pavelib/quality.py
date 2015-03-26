@@ -7,6 +7,57 @@ import re
 
 from .utils.envs import Env
 
+ALL_SYSTEMS = 'lms,cms,common'
+
+
+@task
+@needs('pavelib.prereqs.install_python_prereqs')
+@cmdopts([
+    ("system=", "s", "System to act on"),
+])
+def find_fixme(options):
+    """
+    Run pylint on system code, only looking for fixme items.
+    """
+    num_fixme = 0
+    systems = getattr(options, 'system', ALL_SYSTEMS).split(',')
+
+    for system in systems:
+        # Directory to put the pylint report in.
+        # This makes the folder if it doesn't already exist.
+        report_dir = (Env.REPORT_DIR / system).makedirs_p()
+
+        apps = [system]
+
+        for directory in ['djangoapps', 'lib']:
+            dirs = os.listdir(os.path.join(system, directory))
+            apps.extend([d for d in dirs if os.path.isdir(os.path.join(system, directory, d))])
+
+        apps_list = ' '.join(apps)
+
+        pythonpath_prefix = (
+            "PYTHONPATH={system}:{system}/lib"
+            "common/djangoapps:common/lib".format(
+                system=system
+            )
+        )
+
+        sh(
+            "{pythonpath_prefix} pylint --disable R,C,W,E --enable=fixme "
+            "--msg-template={msg_template} {apps} "
+            "| tee {report_dir}/pylint_fixme.report".format(
+                pythonpath_prefix=pythonpath_prefix,
+                msg_template='"{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"',
+                apps=apps_list,
+                report_dir=report_dir
+            )
+        )
+
+        num_fixme += _count_pylint_violations(
+            "{report_dir}/pylint_fixme.report".format(report_dir=report_dir))
+
+    print("Number of pylint fixmes: " + str(num_fixme))
+
 
 @task
 @needs('pavelib.prereqs.install_python_prereqs')
@@ -23,7 +74,10 @@ def run_pylint(options):
     num_violations = 0
     violations_limit = int(getattr(options, 'limit', -1))
     errors = getattr(options, 'errors', False)
-    systems = getattr(options, 'system', 'lms,cms,common').split(',')
+    systems = getattr(options, 'system', ALL_SYSTEMS).split(',')
+    
+    # Make sure the metrics subdirectory exists
+    Env.METRICS_DIR.makedirs_p()
 
     for system in systems:
         # Directory to put the pylint report in.
@@ -36,7 +90,7 @@ def run_pylint(options):
 
         apps = [system]
 
-        for directory in ['djangoapps', 'lib']:
+        for directory in ['lib']:
             dirs = os.listdir(os.path.join(system, directory))
             apps.extend([d for d in dirs if os.path.isdir(os.path.join(system, directory, d))])
 
@@ -50,10 +104,11 @@ def run_pylint(options):
         )
 
         sh(
-            "{pythonpath_prefix} pylint {flags} -f parseable {apps} | "
+            "{pythonpath_prefix} pylint {flags} --msg-template={msg_template} {apps} | "
             "tee {report_dir}/pylint.report".format(
                 pythonpath_prefix=pythonpath_prefix,
                 flags=" ".join(flags),
+                msg_template='"{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"',
                 apps=apps_list,
                 report_dir=report_dir
             )
@@ -62,7 +117,15 @@ def run_pylint(options):
         num_violations += _count_pylint_violations(
             "{report_dir}/pylint.report".format(report_dir=report_dir))
 
-    print("Number of pylint violations: " + str(num_violations))
+    # Print number of violations to log
+    violations_count_str = "Number of pylint violations: " + str(num_violations)
+    print(violations_count_str)
+
+    # Also write the number of violations to a file
+    with open(Env.METRICS_DIR / "pylint", "w") as f:
+        f.write(violations_count_str)
+
+    # Fail number of violations is greater than the limit
     if num_violations > violations_limit > -1:
         raise Exception("Failed. Too many pylint violations. "
                         "The limit is {violations_limit}.".format(violations_limit=violations_limit))
@@ -91,31 +154,43 @@ def _count_pylint_violations(report_file):
 @needs('pavelib.prereqs.install_python_prereqs')
 @cmdopts([
     ("system=", "s", "System to act on"),
-    ("limit=", "l", "limit for number of acceptable violations"),
 ])
 def run_pep8(options):
     """
-    Run pep8 on system code. When violations limit is passed in,
-    fail the task if too many violations are found.
+    Run pep8 on system code.
+    Fail the task if any violations are found.
     """
-    num_violations = 0
-    systems = getattr(options, 'system', 'lms,cms,common').split(',')
-    violations_limit = int(getattr(options, 'limit', -1))
+    systems = getattr(options, 'system', ALL_SYSTEMS).split(',')
+
+    report_dir = (Env.REPORT_DIR / 'pep8')
+    report_dir.rmtree(ignore_errors=True)
+    report_dir.makedirs_p()
+    
+    # Make sure the metrics subdirectory exists
+    Env.METRICS_DIR.makedirs_p()
 
     for system in systems:
-        # Directory to put the pep8 report in.
-        # This makes the folder if it doesn't already exist.
-        report_dir = (Env.REPORT_DIR / system).makedirs_p()
+        sh('pep8 {system} | tee {report_dir}/pep8.report -a'.format(system=system, report_dir=report_dir))
 
-        sh('pep8 {system} | tee {report_dir}/pep8.report'.format(system=system, report_dir=report_dir))
-        num_violations = num_violations + _count_pep8_violations(
-            "{report_dir}/pep8.report".format(report_dir=report_dir))
+    count = _count_pep8_violations(
+        "{report_dir}/pep8.report".format(report_dir=report_dir)
+    )
 
-    print("Number of pep8 violations: " + str(num_violations))
-    # Fail the task if the violations limit has been reached
-    if num_violations > violations_limit > -1:
-        raise Exception("Failed. Too many pep8 violations. "
-                        "The limit is {violations_limit}.".format(violations_limit=violations_limit))
+    # Print number of violations to log
+    violations_count_str = "Number of pep8 violations: {count}".format(count=count)
+    print(violations_count_str)
+
+    # Also write the number of violations to a file
+    with open(Env.METRICS_DIR / "pep8", "w") as f:
+        f.write(violations_count_str)
+
+    # Fail if any violations are found
+    if count:
+        raise Exception(
+            "Too many pep8 violations. Number of violations found: {count}.".format(
+                count=count
+            )
+        )
 
 
 def _count_pep8_violations(report_file):
@@ -125,15 +200,36 @@ def _count_pep8_violations(report_file):
 
 @task
 @needs('pavelib.prereqs.install_python_prereqs')
+def run_complexity():
+    """
+    Uses radon to examine cyclomatic complexity.
+    For additional details on radon, see http://radon.readthedocs.org/
+    """
+    system_string = 'cms/ lms/ common/ openedx/'
+    print "--> Calculating cyclomatic complexity of files..."
+    try:
+        sh(
+            "radon cc {system_string} --total-average".format(
+                system_string=system_string
+            )
+        )
+    except BuildFailure:
+        print "ERROR: Unable to calculate python-only code-complexity."
+
+
+@task
+@needs('pavelib.prereqs.install_python_prereqs')
 @cmdopts([
+    ("compare-branch=", "b", "Branch to compare against, defaults to origin/master"),
     ("percentage=", "p", "fail if diff-quality is below this percentage"),
 ])
 def run_quality(options):
     """
     Build the html diff quality reports, and print the reports to the console.
+    :param: b, the branch to compare against, defaults to origin/master
     :param: p, diff-quality will fail if the quality percentage calculated is
         below this percentage. For example, if p is set to 80, and diff-quality finds
-        quality of the branch vs master is less than 80%, then this task will fail.
+        quality of the branch vs the compare branch is less than 80%, then this task will fail.
         This threshold would be applied to both pep8 and pylint.
     """
 
@@ -141,6 +237,12 @@ def run_quality(options):
     # This makes the folder if it doesn't already exist.
     dquality_dir = (Env.REPORT_DIR / "diff_quality").makedirs_p()
     diff_quality_percentage_failure = False
+
+    # Set the string, if needed, to be used for the diff-quality --compare-branch switch.
+    compare_branch = getattr(options, 'compare_branch', None)
+    compare_branch_string = ''
+    if compare_branch:
+        compare_branch_string = '--compare-branch={0}'.format(compare_branch)
 
     # Set the string, if needed, to be used for the diff-quality --fail-under switch.
     diff_threshold = int(getattr(options, 'percentage', -1))
@@ -158,9 +260,10 @@ def run_quality(options):
     try:
         sh(
             "diff-quality --violations=pep8 {pep8_reports} {percentage_string} "
-            "--html-report {dquality_dir}/diff_quality_pep8.html".format(
+            "{compare_branch_string} --html-report {dquality_dir}/diff_quality_pep8.html".format(
                 pep8_reports=pep8_reports,
                 percentage_string=percentage_string,
+                compare_branch_string=compare_branch_string,
                 dquality_dir=dquality_dir
             )
         )
@@ -185,14 +288,13 @@ def run_quality(options):
     try:
         sh(
             "{pythonpath_prefix} diff-quality --violations=pylint "
-            "{pylint_reports} {percentage_string} "
-            "--html-report {dquality_dir}/diff_quality_pylint.html "
-            "--options='{pylint_options}'".format(
+            "{pylint_reports} {percentage_string} {compare_branch_string} "
+            "--html-report {dquality_dir}/diff_quality_pylint.html ".format(
                 pythonpath_prefix=pythonpath_prefix,
                 pylint_reports=pylint_reports,
                 percentage_string=percentage_string,
+                compare_branch_string=compare_branch_string,
                 dquality_dir=dquality_dir,
-                pylint_options="--disable=fixme",
             )
         )
     except BuildFailure, error_message:

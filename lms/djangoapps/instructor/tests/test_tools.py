@@ -12,7 +12,7 @@ from django.test.utils import override_settings
 from django.utils.timezone import utc
 
 from courseware.models import StudentModule
-from courseware.tests.modulestore_config import TEST_DATA_MONGO_MODULESTORE
+from xmodule.modulestore.tests.django_utils import TEST_DATA_MOCK_MODULESTORE
 from student.tests.factories import UserFactory
 from xmodule.fields import Date
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
@@ -70,6 +70,7 @@ class TestRequireStudentIdentifier(unittest.TestCase):
         """
         Fixtures
         """
+        super(TestRequireStudentIdentifier, self).setUp()
         self.student = UserFactory.create()
 
     def test_valid_student_id(self):
@@ -97,7 +98,6 @@ class TestParseDatetime(unittest.TestCase):
             tools.parse_datetime('foo')
 
 
-@override_settings(MODULESTORE=TEST_DATA_MONGO_MODULESTORE)
 class TestFindUnit(ModuleStoreTestCase):
     """
     Test the find_unit function.
@@ -107,6 +107,8 @@ class TestFindUnit(ModuleStoreTestCase):
         """
         Fixtures.
         """
+        super(TestFindUnit, self).setUp()
+
         course = CourseFactory.create()
         week1 = ItemFactory.create(parent=course)
         homework = ItemFactory.create(parent=week1)
@@ -119,7 +121,8 @@ class TestFindUnit(ModuleStoreTestCase):
         Test finding a nested unit.
         """
         url = self.homework.location.to_deprecated_string()
-        self.assertEqual(tools.find_unit(self.course, url), self.homework)
+        found_unit = tools.find_unit(self.course, url)
+        self.assertEqual(found_unit.location, self.homework.location)
 
     def test_find_unit_notfound(self):
         """
@@ -130,7 +133,6 @@ class TestFindUnit(ModuleStoreTestCase):
             tools.find_unit(self.course, url)
 
 
-@override_settings(MODULESTORE=TEST_DATA_MONGO_MODULESTORE)
 class TestGetUnitsWithDueDate(ModuleStoreTestCase):
     """
     Test the get_units_with_due_date function.
@@ -139,6 +141,8 @@ class TestGetUnitsWithDueDate(ModuleStoreTestCase):
         """
         Fixtures.
         """
+        super(TestGetUnitsWithDueDate, self).setUp()
+
         due = datetime.datetime(2010, 5, 12, 2, 42, tzinfo=utc)
         course = CourseFactory.create()
         week1 = ItemFactory.create(due=due, parent=course)
@@ -178,7 +182,6 @@ class TestTitleOrUrl(unittest.TestCase):
         self.assertEquals(tools.title_or_url(unit), 'test:hello')
 
 
-@override_settings(MODULESTORE=TEST_DATA_MONGO_MODULESTORE)
 class TestSetDueDateExtension(ModuleStoreTestCase):
     """
     Test the set_due_date_extensions function.
@@ -187,6 +190,8 @@ class TestSetDueDateExtension(ModuleStoreTestCase):
         """
         Fixtures.
         """
+        super(TestSetDueDateExtension, self).setUp()
+
         due = datetime.datetime(2010, 5, 12, 2, 42, tzinfo=utc)
         course = CourseFactory.create()
         week1 = ItemFactory.create(due=due, parent=course)
@@ -252,7 +257,6 @@ class TestSetDueDateExtension(ModuleStoreTestCase):
         self.assertEqual(self.extended_due(self.homework), None)
 
 
-@override_settings(MODULESTORE=TEST_DATA_MONGO_MODULESTORE)
 class TestDataDumps(ModuleStoreTestCase):
     """
     Test data dumps for reporting.
@@ -262,6 +266,8 @@ class TestDataDumps(ModuleStoreTestCase):
         """
         Fixtures.
         """
+        super(TestDataDumps, self).setUp()
+
         due = datetime.datetime(2010, 5, 12, 2, 42, tzinfo=utc)
         course = CourseFactory.create()
         week1 = ItemFactory.create(due=due, parent=course)

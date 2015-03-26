@@ -31,9 +31,11 @@ class TestPaverQualityViolations(unittest.TestCase):
 
     @file_data('pylint_test_list.json')
     def test_pylint_parser_count_violations(self, value):
-    # Tests:
-    #     * Different types of violations
-    #     * One violation covering multiple lines
+        """
+        Tests:
+        - Different types of violations
+        - One violation covering multiple lines
+        """
         with open(self.f.name, 'w') as f:
             f.write(value)
         num = pavelib.quality._count_pylint_violations(f.name)
@@ -60,6 +62,8 @@ class TestPaverRunQuality(unittest.TestCase):
         self._mock_paver_needs = patch.object(pavelib.quality.run_quality, 'needs').start()
         self._mock_paver_needs.return_value = 0
         self._mock_paver_sh = patch('pavelib.quality.sh').start()
+        self.addCleanup(self._mock_paver_sh.stop())
+        self.addCleanup(self._mock_paver_needs.stop())
 
     def test_failure_on_diffquality_pep8(self):
         """

@@ -16,9 +16,10 @@ from courseware.tests.factories import UserStateSummaryFactory
 from courseware.tests.factories import StudentPrefsFactory, StudentInfoFactory
 
 from xblock.fields import Scope, BlockScope, ScopeIds
+from xblock.exceptions import KeyValueMultiSaveError
+from xblock.core import XBlock
 from django.test import TestCase
 from django.db import DatabaseError
-from xblock.exceptions import KeyValueMultiSaveError
 
 
 def mock_field(scope, name):
@@ -29,7 +30,7 @@ def mock_field(scope, name):
 
 
 def mock_descriptor(fields=[]):
-    descriptor = Mock()
+    descriptor = Mock(entry_point=XBlock.entry_point)
     descriptor.scope_ids = ScopeIds('user1', 'mock_problem', location('def_id'), location('usage_id'))
     descriptor.module_class.fields.values.return_value = fields
     descriptor.fields.values.return_value = fields
@@ -53,6 +54,7 @@ class StudentModuleFactory(cmfStudentModuleFactory):
 
 class TestInvalidScopes(TestCase):
     def setUp(self):
+        super(TestInvalidScopes, self).setUp()
         self.user = UserFactory.create(username='user')
         self.field_data_cache = FieldDataCache([mock_descriptor([mock_field(Scope.user_state, 'a_field')])], course_id, self.user)
         self.kvs = DjangoKeyValueStore(self.field_data_cache)
@@ -100,6 +102,7 @@ class TestStudentModuleStorage(OtherUserFailureTestMixin, TestCase):
     existing_field_name = "a_field"
 
     def setUp(self):
+        super(TestStudentModuleStorage, self).setUp()
         student_module = StudentModuleFactory(state=json.dumps({'a_field': 'a_value', 'b_field': 'b_value'}))
         self.user = student_module.student
         self.assertEqual(self.user.id, 1)   # check our assumption hard-coded in the key functions above.
@@ -178,6 +181,8 @@ class TestStudentModuleStorage(OtherUserFailureTestMixin, TestCase):
 
 class TestMissingStudentModule(TestCase):
     def setUp(self):
+        super(TestMissingStudentModule, self).setUp()
+
         self.user = UserFactory.create(username='user')
         self.assertEqual(self.user.id, 1)   # check our assumption hard-coded in the key functions above.
         self.field_data_cache = FieldDataCache([mock_descriptor()], course_id, self.user)

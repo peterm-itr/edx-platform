@@ -17,6 +17,7 @@ from django.shortcuts import redirect, get_object_or_404
 from django.utils.translation import ugettext as _
 
 from edxmako.shortcuts import render_to_response, render_to_string
+from student.forms import AccountCreationForm
 
 from util.db import commit_on_success_with_read_committed
 from util.json_request import JsonResponse
@@ -198,7 +199,8 @@ def company_progress(request, company_id):
             except KeyError:
                 courses_data[enrollment.course_id] = {
                     'course': course,
-                    'students': []
+                    'students': [],
+                    'ordered_grades': sorted(course.grade_cutoffs.items(), key=lambda i: i[1], reverse=True),
                 }
 
             courses_data[enrollment.course_id]['students'].append({
@@ -237,97 +239,35 @@ def set_representative(request, profile_id):
 def add_profile(request, company_id):
     js = {'success': False}
 
-    post_vars = request.POST
-
-    for req_field in ['username', 'password', 'name']:
-        if req_field not in post_vars:
-            js['value'] = _("Error (401 {field}). E-mail us.").format(field=req_field)
-            js['field'] = req_field
-            return JsonResponse(js, status=400)
+    params = dict(request.POST.items())
 
     extra_fields = getattr(settings, 'REGISTRATION_EXTRA_FIELDS', {})
 
-    if not 'email' in post_vars or not post_vars['email']:
-        post_vars = dict(post_vars.items())
-        post_vars.update(dict(email = post_vars['username'] + '@example.com'))
-
-    required_post_vars = ['username', 'name', 'password']
-    required_post_vars += [fieldname for fieldname, val in extra_fields.items()
-                           if val == 'required']
-
-    for field_name in required_post_vars:
-        if field_name in ('gender', 'level_of_education'):
-            min_length = 1
-        else:
-            min_length = 2
-
-        if field_name not in post_vars or len(post_vars[field_name]) < min_length:
-            error_str = {
-                'username': _('Username must be minimum of two characters long'),
-                'email': _('A properly formatted e-mail is required'),
-                'name': _('Your legal name must be a minimum of two characters long'),
-                'password': _('A valid password is required'),
-                'terms_of_service': _('Accepting Terms of Service is required'),
-                'honor_code': _('Agreeing to the Honor Code is required'),
-                'level_of_education': _('A level of education is required'),
-                'gender': _('Your gender is required'),
-                'year_of_birth': _('Your year of birth is required'),
-                'mailing_address': _('Your mailing address is required'),
-                'goals': _('A description of your goals is required'),
-                'city': _('A city is required'),
-                'country': _('A country is required'),
-                'phone': _('A phone is required'),
-                'company_title': _('Company name is required')
-            }
-
-            if field_name in error_str:
-                js['value'] = error_str[field_name]
-            else:
-                js['value'] = _('You are missing one or more required fields')
-
-            js['field'] = field_name
-            return JsonResponse(js, status=400)
-
-        max_length = 75
-        if field_name == 'username':
-            max_length = 30
-
-        if field_name in ('email', 'username') and len(post_vars[field_name]) > max_length:
-            error_str = {
-                'username': _('Username cannot be more than {num} characters long').format(num=max_length),
-                'email': _('Email cannot be more than {num} characters long').format(num=max_length)
-            }
-            js['value'] = error_str[field_name]
-            js['field'] = field_name
-            return JsonResponse(js, status=400)
-
-    try:
-        validate_email(post_vars['email'])
-    except ValidationError:
-        js['value'] = _("Valid e-mail is required.")
-        js['field'] = 'email'
-        return JsonResponse(js, status=400)
-
-    try:
-        validate_slug(post_vars['username'])
-    except ValidationError:
-        js['value'] = _("Username should only consist of A-Z and 0-9, with no spaces.")
-        js['field'] = 'username'
-        return JsonResponse(js, status=400)
-
-    username = post_vars['username']
-    password = post_vars['password']
-    if username == password:
-        js['value'] = _("Username and password fields cannot match")
-        js['field'] = 'username'
-        return JsonResponse(js, status=400)
+    form = AccountCreationForm(
+        data=params,
+        extra_fields=extra_fields,
+        extended_profile_fields=[],
+        enforce_username_neq_password=True,
+        enforce_password_policy=False,
+        tos_required=False
+    )
 
     # Ok, looks like everything is legit.  Create the account.
     try:
         with transaction.commit_on_success():
-            ret = _do_create_account(post_vars, None)
+            ret = _do_create_account(form, params)
     except AccountValidationError as exc:
         return JsonResponse({'success': False, 'value': exc.message, 'field': exc.field}, status=400)
+    except ValidationError as exc:
+        field, error_list = next(exc.message_dict.iteritems())
+        return JsonResponse(
+            {
+                "success": False,
+                "field": field,
+                "value": error_list[0],
+            },
+            status=400
+        )
 
     (user, profile, registration) = ret
     user.is_active = True

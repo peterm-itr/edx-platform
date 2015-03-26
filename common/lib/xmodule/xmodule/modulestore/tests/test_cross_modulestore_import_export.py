@@ -11,25 +11,27 @@ and then for each combination of modulestores, performing the sequence:
     4) Compare all modules in the source and destination modulestores to make sure that they line up
 
 """
-import ddt
-import itertools
-import random
 from contextlib import contextmanager, nested
+import itertools
+from path import path
+import random
 from shutil import rmtree
 from tempfile import mkdtemp
-from path import path
+
+import ddt
+from nose.plugins.attrib import attr
 
 from xmodule.tests import CourseComparisonTest
-
 from xmodule.modulestore.mongo.base import ModuleStoreEnum
 from xmodule.modulestore.mongo.draft import DraftModuleStore
 from xmodule.modulestore.mixed import MixedModuleStore
 from xmodule.contentstore.mongo import MongoContentStore
-from xmodule.modulestore.xml_importer import import_from_xml
-from xmodule.modulestore.xml_exporter import export_to_xml
+from xmodule.modulestore.xml_importer import import_course_from_xml
+from xmodule.modulestore.xml_exporter import export_course_to_xml
 from xmodule.modulestore.split_mongo.split_draft import DraftVersioningModuleStore
 from xmodule.modulestore.tests.mongo_connection import MONGO_PORT_NUM, MONGO_HOST
 from xmodule.modulestore.inheritance import InheritanceMixin
+from xmodule.partitions.tests.test_partitions import PartitionTestCase
 from xmodule.x_module import XModuleMixin
 from xmodule.modulestore.xml import XMLModuleStore
 
@@ -74,12 +76,66 @@ class MemoryCache(object):
         self._data[key] = value
 
 
-class MongoModulestoreBuilder(object):
+class MongoContentstoreBuilder(object):
+    """
+    A builder class for a MongoContentStore.
+    """
+    @contextmanager
+    def build(self):
+        """
+        A contextmanager that returns a MongoContentStore, and deletes its contents
+        when the context closes.
+        """
+        contentstore = MongoContentStore(
+            db='contentstore{}'.format(random.randint(0, 10000)),
+            collection='content',
+            **COMMON_DOCSTORE_CONFIG
+        )
+        contentstore.ensure_indexes()
+
+        try:
+            yield contentstore
+        finally:
+            # Delete the created database
+            contentstore._drop_database()  # pylint: disable=protected-access
+
+    def __repr__(self):
+        return 'MongoContentstoreBuilder()'
+
+
+class StoreBuilderBase(object):
+    """
+    Base class for all modulestore builders.
+    """
+    @contextmanager
+    def build(self, **kwargs):
+        """
+        Build the modulstore, optionally building the contentstore as well.
+        """
+        contentstore = kwargs.pop('contentstore', None)
+        if not contentstore:
+            with self.build_without_contentstore() as (contentstore, modulestore):
+                yield contentstore, modulestore
+        else:
+            with self.build_with_contentstore(contentstore) as modulestore:
+                yield modulestore
+
+    @contextmanager
+    def build_without_contentstore(self):
+        """
+        Build both the contentstore and the modulestore.
+        """
+        with MongoContentstoreBuilder().build() as contentstore:
+            with self.build_with_contentstore(contentstore) as modulestore:
+                yield contentstore, modulestore
+
+
+class MongoModulestoreBuilder(StoreBuilderBase):
     """
     A builder class for a DraftModuleStore.
     """
     @contextmanager
-    def build(self, contentstore):
+    def build_with_contentstore(self, contentstore):
         """
         A contextmanager that returns an isolated mongo modulestore, and then deletes
         all of its data at the end of the context.
@@ -98,6 +154,7 @@ class MongoModulestoreBuilder(object):
         # Set up a temp directory for storing filesystem content created during import
         fs_root = mkdtemp()
 
+        # pylint: disable=attribute-defined-outside-init
         modulestore = DraftModuleStore(
             contentstore,
             doc_store_config,
@@ -113,7 +170,7 @@ class MongoModulestoreBuilder(object):
             yield modulestore
         finally:
             # Delete the created database
-            modulestore._drop_database()
+            modulestore._drop_database()  # pylint: disable=protected-access
 
             # Delete the created directory on the filesystem
             rmtree(fs_root, ignore_errors=True)
@@ -122,12 +179,12 @@ class MongoModulestoreBuilder(object):
         return 'MongoModulestoreBuilder()'
 
 
-class VersioningModulestoreBuilder(object):
+class VersioningModulestoreBuilder(StoreBuilderBase):
     """
     A builder class for a VersioningModuleStore.
     """
     @contextmanager
-    def build(self, contentstore):
+    def build_with_contentstore(self, contentstore):
         """
         A contextmanager that returns an isolated versioning modulestore, and then deletes
         all of its data at the end of the context.
@@ -158,7 +215,7 @@ class VersioningModulestoreBuilder(object):
             yield modulestore
         finally:
             # Delete the created database
-            modulestore._drop_database()
+            modulestore._drop_database()  # pylint: disable=protected-access
 
             # Delete the created directory on the filesystem
             rmtree(fs_root, ignore_errors=True)
@@ -167,13 +224,13 @@ class VersioningModulestoreBuilder(object):
         return 'SplitModulestoreBuilder()'
 
 
-class XmlModulestoreBuilder(object):
+class XmlModulestoreBuilder(StoreBuilderBase):
     """
     A builder class for a XMLModuleStore.
     """
     # pylint: disable=unused-argument
     @contextmanager
-    def build(self, contentstore=None, course_ids=None):
+    def build_with_contentstore(self, contentstore=None, course_ids=None):
         """
         A contextmanager that returns an isolated xml modulestore
 
@@ -191,7 +248,7 @@ class XmlModulestoreBuilder(object):
         yield modulestore
 
 
-class MixedModulestoreBuilder(object):
+class MixedModulestoreBuilder(StoreBuilderBase):
     """
     A builder class for a MixedModuleStore.
     """
@@ -204,9 +261,10 @@ class MixedModulestoreBuilder(object):
         """
         self.store_builders = store_builders
         self.mappings = mappings or {}
+        self.mixed_modulestore = None
 
     @contextmanager
-    def build(self, contentstore):
+    def build_with_contentstore(self, contentstore):
         """
         A contextmanager that returns a mixed modulestore built on top of modulestores
         generated by other builder classes.
@@ -217,7 +275,7 @@ class MixedModulestoreBuilder(object):
         """
         names, generators = zip(*self.store_builders)
 
-        with nested(*(gen.build(contentstore) for gen in generators)) as modulestores:
+        with nested(*(gen.build_with_contentstore(contentstore) for gen in generators)) as modulestores:
             # Make the modulestore creation function just return the already-created modulestores
             store_iterator = iter(modulestores)
             create_modulestore_instance = lambda *args, **kwargs: store_iterator.next()
@@ -225,7 +283,7 @@ class MixedModulestoreBuilder(object):
             # Generate a fake list of stores to give the already generated stores appropriate names
             stores = [{'NAME': name, 'ENGINE': 'This space deliberately left blank'} for name in names]
 
-            modulestore = MixedModuleStore(
+            self.mixed_modulestore = MixedModuleStore(
                 contentstore,
                 self.mappings,
                 stores,
@@ -233,37 +291,29 @@ class MixedModulestoreBuilder(object):
                 xblock_mixins=XBLOCK_MIXINS,
             )
 
-            yield modulestore
+            yield self.mixed_modulestore
 
     def __repr__(self):
         return 'MixedModulestoreBuilder({!r}, {!r})'.format(self.store_builders, self.mappings)
 
-
-class MongoContentstoreBuilder(object):
-    """
-    A builder class for a MongoContentStore.
-    """
-    @contextmanager
-    def build(self):
+    def asset_collection(self):
         """
-        A contextmanager that returns a MongoContentStore, and deletes its contents
-        when the context closes.
+        Returns the collection storing the asset metadata.
         """
-        contentstore = MongoContentStore(
-            db='contentstore{}'.format(random.randint(0, 10000)),
-            collection='content',
-            **COMMON_DOCSTORE_CONFIG
-        )
-        contentstore.ensure_indexes()
+        all_stores = self.mixed_modulestore.modulestores
+        if len(all_stores) > 1:
+            return None
 
-        try:
-            yield contentstore
-        finally:
-            # Delete the created database
-            contentstore._drop_database()
+        store = all_stores[0]
+        if hasattr(store, 'asset_collection'):
+            # Mongo modulestore beneath mixed.
+            # Returns the entire collection with *all* courses' asset metadata.
+            return store.asset_collection
+        else:
+            # Split modulestore beneath mixed.
+            # Split stores all asset metadata in the structure collection.
+            return store.db_connection.structures
 
-    def __repr__(self):
-        return 'MongoContentstoreBuilder()'
 
 MIXED_MODULESTORE_BOTH_SETUP = MixedModulestoreBuilder([
     ('draft', MongoModulestoreBuilder()),
@@ -273,11 +323,21 @@ MIXED_MODULESTORE_SETUPS = (
     MixedModulestoreBuilder([('draft', MongoModulestoreBuilder())]),
     MixedModulestoreBuilder([('split', VersioningModulestoreBuilder())]),
 )
+MIXED_MS_SETUPS_SHORT = (
+    'mixed_mongo',
+    'mixed_split',
+)
 DIRECT_MODULESTORE_SETUPS = (
     MongoModulestoreBuilder(),
-#     VersioningModulestoreBuilder(),  # FUTUREDO: LMS-11227
+    # VersioningModulestoreBuilder(),  # FUTUREDO: LMS-11227
+)
+DIRECT_MS_SETUPS_SHORT = (
+    'mongo',
+    #'split',
 )
 MODULESTORE_SETUPS = DIRECT_MODULESTORE_SETUPS + MIXED_MODULESTORE_SETUPS
+MODULESTORE_SHORTNAMES = DIRECT_MS_SETUPS_SHORT + MIXED_MS_SETUPS_SHORT
+SHORT_NAME_MAP = dict(zip(MODULESTORE_SETUPS, MODULESTORE_SHORTNAMES))
 
 CONTENTSTORE_SETUPS = (MongoContentstoreBuilder(),)
 COURSE_DATA_NAMES = (
@@ -289,7 +349,8 @@ COURSE_DATA_NAMES = (
 
 
 @ddt.ddt
-class CrossStoreXMLRoundtrip(CourseComparisonTest):
+@attr('mongo')
+class CrossStoreXMLRoundtrip(CourseComparisonTest, PartitionTestCase):
     """
     This class exists to test XML import and export between different modulestore
     classes.
@@ -309,29 +370,29 @@ class CrossStoreXMLRoundtrip(CourseComparisonTest):
     ))
     @ddt.unpack
     def test_round_trip(self, source_builder, dest_builder, source_content_builder, dest_content_builder, course_data_name):
-
         # Construct the contentstore for storing the first import
         with source_content_builder.build() as source_content:
             # Construct the modulestore for storing the first import (using the previously created contentstore)
-            with source_builder.build(source_content) as source_store:
+            with source_builder.build(contentstore=source_content) as source_store:
                 # Construct the contentstore for storing the second import
                 with dest_content_builder.build() as dest_content:
                     # Construct the modulestore for storing the second import (using the second contentstore)
-                    with dest_builder.build(dest_content) as dest_store:
+                    with dest_builder.build(contentstore=dest_content) as dest_store:
                         source_course_key = source_store.make_course_key('a', 'course', 'course')
                         dest_course_key = dest_store.make_course_key('a', 'course', 'course')
 
-                        import_from_xml(
+                        import_course_from_xml(
                             source_store,
                             'test_user',
                             TEST_DATA_DIR,
-                            course_dirs=[course_data_name],
+                            source_dirs=[course_data_name],
                             static_content_store=source_content,
-                            target_course_id=source_course_key,
-                            create_new_course_if_not_present=True,
+                            target_id=source_course_key,
+                            raise_on_failure=True,
+                            create_if_not_present=True,
                         )
 
-                        export_to_xml(
+                        export_course_to_xml(
                             source_store,
                             source_content,
                             source_course_key,
@@ -339,24 +400,25 @@ class CrossStoreXMLRoundtrip(CourseComparisonTest):
                             'exported_source_course',
                         )
 
-                        import_from_xml(
+                        import_course_from_xml(
                             dest_store,
                             'test_user',
                             self.export_dir,
-                            course_dirs=['exported_source_course'],
+                            source_dirs=['exported_source_course'],
                             static_content_store=dest_content,
-                            target_course_id=dest_course_key,
-                            create_new_course_if_not_present=True,
+                            target_id=dest_course_key,
+                            raise_on_failure=True,
+                            create_if_not_present=True,
                         )
 
-# NOT CURRENTLY USED
-#                         export_to_xml(
-#                             dest_store,
-#                             dest_content,
-#                             dest_course_key,
-#                             self.export_dir,
-#                             'exported_dest_course',
-#                         )
+                        # NOT CURRENTLY USED
+                        # export_course_to_xml(
+                        #     dest_store,
+                        #     dest_content,
+                        #     dest_course_key,
+                        #     self.export_dir,
+                        #     'exported_dest_course',
+                        # )
 
                         self.exclude_field(None, 'wiki_slug')
                         self.exclude_field(None, 'xml_attributes')
@@ -377,5 +439,12 @@ class CrossStoreXMLRoundtrip(CourseComparisonTest):
                             source_content,
                             source_course_key,
                             dest_content,
+                            dest_course_key,
+                        )
+
+                        self.assertAssetsMetadataEqual(
+                            source_store,
+                            source_course_key,
+                            dest_store,
                             dest_course_key,
                         )

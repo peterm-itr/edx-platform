@@ -9,7 +9,7 @@ var edx = edx || {};
     edx.student.account.EnrollmentInterface = {
 
         urls: {
-            course: '/enrollment/v0/course/',
+            orders: '/commerce/orders/',
             trackSelection: '/course_modes/choose/'
         },
 
@@ -23,13 +23,36 @@ var edx = edx || {};
          * @param  {string} courseKey  Slash-separated course key.
          */
         enroll: function( courseKey ) {
+            var data_obj = {course_id: courseKey},
+                data = JSON.stringify(data_obj);
+
             $.ajax({
-                url: this.courseEnrollmentUrl( courseKey ),
+                url: this.urls.orders,
                 type: 'POST',
-                data: {},
+                contentType: 'application/json; charset=utf-8',
+                data: data,
                 headers: this.headers,
                 context: this
-            }).always(function() {
+            })
+            .fail(function( jqXHR ) {
+                var responseData = JSON.parse(jqXHR.responseText);
+                if ( jqXHR.status === 403 && responseData.user_message_url ) {
+                    // Check if we've been blocked from the course
+                    // because of country access rules.
+                    // If so, redirect to a page explaining to the user
+                    // why they were blocked.
+                    this.redirect( responseData.user_message_url );
+                }
+                else {
+                    // Otherwise, go to the track selection page as usual.
+                    // This can occur, for example, when a course does not
+                    // have a free enrollment mode, so we can't auto-enroll.
+                    this.redirect( this.trackSelectionUrl( courseKey ) );
+                }
+            })
+            .done(function() {
+                // If we successfully enrolled, go to the track selection
+                // page to allow the user to choose a paid enrollment mode.
                 this.redirect( this.trackSelectionUrl( courseKey ) );
             });
         },
@@ -41,15 +64,6 @@ var edx = edx || {};
          */
         trackSelectionUrl: function( courseKey ) {
             return this.urls.trackSelection + courseKey + '/';
-        },
-
-        /**
-         * Construct a URL to enroll in a course.
-         * @param  {string} courseKey Slash-separated course key.
-         * @return {string} The URL to enroll in a course.
-         */
-        courseEnrollmentUrl: function( courseKey ) {
-            return this.urls.course + courseKey;
         },
 
         /**

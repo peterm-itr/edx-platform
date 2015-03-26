@@ -305,7 +305,7 @@ class CourseOutlineChild(PageObject, CourseOutlineItem):
             grandkids.extend(descendant.children)
 
         grand_locators = [grandkid.locator for grandkid in grandkids]
-        return [descendant for descendant in descendants if not descendant.locator in grand_locators]
+        return [descendant for descendant in descendants if descendant.locator not in grand_locators]
 
 
 class CourseOutlineUnit(CourseOutlineChild):
@@ -495,7 +495,7 @@ class CourseOutlinePage(CoursePage, CourseOutlineContainer):
         """
         element_css = self.BOTTOM_ADD_SECTION_BUTTON
         if click_child_icon:
-            element_css += " .icon-plus"
+            element_css += " .fa-plus"
 
         click_css(self, element_css)
 
@@ -504,6 +504,12 @@ class CourseOutlinePage(CoursePage, CourseOutlineContainer):
         Toggles whether all sections are expanded or collapsed
         """
         self.q(css=self.EXPAND_COLLAPSE_CSS).click()
+
+    def start_reindex(self):
+        """
+        Starts course reindex by clicking reindex button
+        """
+        self.reindex_button.click()
 
     @property
     def bottom_add_section_button(self):
@@ -544,6 +550,13 @@ class CourseOutlinePage(CoursePage, CourseOutlineContainer):
             return ExpandCollapseLinkState.COLLAPSE
         else:
             return ExpandCollapseLinkState.EXPAND
+
+    @property
+    def reindex_button(self):
+        """
+        Returns reindex button.
+        """
+        return self.q(css=".button.button-reindex")[0]
 
     def expand_all_subsections(self):
         """
