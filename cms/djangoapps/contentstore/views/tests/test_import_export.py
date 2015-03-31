@@ -23,7 +23,7 @@ from contentstore.utils import reverse_course_url
 from xmodule.modulestore.tests.factories import ItemFactory, LibraryFactory
 
 from contentstore.tests.utils import CourseTestCase
-from extract_tar import safetar_extractall
+from openedx.core.lib.extract_tar import safetar_extractall
 from student import auth
 from student.roles import CourseInstructorRole, CourseStaffRole
 
@@ -43,6 +43,7 @@ class ImportTestCase(CourseTestCase):
         super(ImportTestCase, self).setUp()
         self.url = reverse_course_url('import_handler', self.course.id)
         self.content_dir = path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.content_dir)
 
         def touch(name):
             """ Equivalent to shell's 'touch'"""
@@ -73,9 +74,6 @@ class ImportTestCase(CourseTestCase):
             btar.add(bad_dir)
 
         self.unsafe_common_dir = path(tempfile.mkdtemp(dir=self.content_dir))
-
-    def tearDown(self):
-        shutil.rmtree(self.content_dir)
 
     def test_no_coursexml(self):
         """

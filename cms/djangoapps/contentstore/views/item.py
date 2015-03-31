@@ -13,6 +13,7 @@ from functools import partial
 from static_replace import replace_static_urls
 from xmodule_modifiers import wrap_xblock, request_token
 
+import dogstats_wrapper as dog_stats_api
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
@@ -24,13 +25,13 @@ from xblock.fields import Scope
 from xblock.fragment import Fragment
 
 import xmodule
-from xmodule.tabs import StaticTab, CourseTabList
+from xmodule.tabs import CourseTabList
 from xmodule.modulestore import ModuleStoreEnum, EdxJSONEncoder
 from xmodule.modulestore.django import modulestore
 from xmodule.modulestore.exceptions import ItemNotFoundError, InvalidLocationError
 from xmodule.modulestore.inheritance import own_metadata
 from xmodule.modulestore.draft_and_published import DIRECT_ONLY_CATEGORIES
-from xmodule.x_module import PREVIEW_VIEWS, STUDIO_VIEW, STUDENT_VIEW
+from xmodule.x_module import PREVIEW_VIEWS, STUDIO_VIEW, STUDENT_VIEW, DEPRECATION_VSCOMPAT_EVENT
 
 from xmodule.course_module import DEFAULT_START_DATE
 from django.contrib.auth.models import User
@@ -47,7 +48,7 @@ from contentstore.views.preview import get_preview_fragment
 from edxmako.shortcuts import render_to_string
 from models.settings.course_grading import CourseGradingModel
 from cms.lib.xblock.runtime import handler_url, local_resource_url
-from opaque_keys.edx.keys import UsageKey, CourseKey
+from opaque_keys.edx.keys import CourseKey
 from opaque_keys.edx.locator import LibraryUsageLocator
 from cms.lib.xblock.authoring_mixin import VISIBILITY_VIEW
 
@@ -264,7 +265,7 @@ def xblock_view_handler(request, usage_key_string, view_name):
                 # pylint: disable=too-many-format-args
                 return HttpResponse(
                     content="Couldn't parse paging parameters: enable_paging: "
-                            "%s, page_number: %s, page_size: %s".format(
+                            "{0}, page_number: {1}, page_size: {2}".format(
                                 request.REQUEST.get('enable_paging', 'false'),
                                 request.REQUEST.get('page_number', 0),
                                 request.REQUEST.get('page_size', 0)
@@ -272,6 +273,8 @@ def xblock_view_handler(request, usage_key_string, view_name):
                     status=400,
                     content_type="text/plain",
                 )
+
+            force_render = request.REQUEST.get('force_render', None)
 
             # Set up the context to be passed to each XBlock's render method.
             context = {
@@ -281,6 +284,7 @@ def xblock_view_handler(request, usage_key_string, view_name):
                 'root_xblock': xblock if (view_name == 'container_preview') else None,
                 'reorderable_items': reorderable_items,
                 'paging': paging,
+                'force_render': force_render,
             }
 
             fragment = get_preview_fragment(request, xblock, context)
@@ -634,6 +638,15 @@ def _delete_item(usage_key, user):
         # if we add one then we need to also add it to the policy information (i.e. metadata)
         # we should remove this once we can break this reference from the course to static tabs
         if usage_key.category == 'static_tab':
+
+            dog_stats_api.increment(
+                DEPRECATION_VSCOMPAT_EVENT,
+                tags=(
+                    "location:_delete_item_static_tab",
+                    u"course:{}".format(unicode(usage_key.course_key)),
+                )
+            )
+
             course = store.get_course(usage_key.course_key)
             existing_tabs = course.tabs or []
             course.tabs = [tab for tab in existing_tabs if tab.get('url_slug') != usage_key.name]

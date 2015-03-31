@@ -335,6 +335,15 @@ class CourseFields(object):
         help=_("Enter the unique identifier for your course's video files provided by edX."),
         scope=Scope.settings
     )
+    facebook_url = String(
+        help=_(
+            "Enter the URL for the official course Facebook group. "
+            "If you provide a URL, the mobile app includes a button that students can tap to access the group."
+        ),
+        default=None,
+        display_name=_("Facebook URL"),
+        scope=Scope.settings
+    )
     no_grade = Boolean(
         display_name=_("Course Not Graded"),
         help=_("Enter true or false. If true, the course will not be graded."),
@@ -669,6 +678,13 @@ class CourseFields(object):
         display_name=_("Certificate Name (Long)"),
         scope=Scope.settings,
         default=""
+    )
+    cert_html_view_overrides = Dict(
+        # Translators: This field is the container for course-specific certifcate configuration values
+        display_name=_("Certificate Web/HTML View Overrides"),
+        # Translators: These overrides allow for an alternative configuration of the certificate web view
+        help=_("Enter course-specific overrides for the Web/HTML template parameters here (JSON format)"),
+        scope=Scope.settings,
     )
 
     # An extra property is used rather than the wiki_slug/number because
@@ -1030,6 +1046,8 @@ class CourseDescriptor(CourseFields, SequenceDescriptor):
     def is_cohorted(self):
         """
         Return whether the course is cohorted.
+
+        Note: No longer used. See openedx.core.djangoapps.course_groups.models.CourseCohortSettings.
         """
         config = self.cohort_config
         if config is None:
@@ -1041,6 +1059,8 @@ class CourseDescriptor(CourseFields, SequenceDescriptor):
     def auto_cohort(self):
         """
         Return whether the course is auto-cohorted.
+
+        Note: No longer used. See openedx.core.djangoapps.course_groups.models.CourseCohortSettings.
         """
         if not self.is_cohorted:
             return False
@@ -1054,6 +1074,8 @@ class CourseDescriptor(CourseFields, SequenceDescriptor):
         Return the list of groups to put students into.  Returns [] if not
         specified. Returns specified list even if is_cohorted and/or auto_cohort are
         false.
+
+        Note: No longer used. See openedx.core.djangoapps.course_groups.models.CourseCohortSettings.
         """
         if self.cohort_config is None:
             return []
@@ -1074,6 +1096,8 @@ class CourseDescriptor(CourseFields, SequenceDescriptor):
         Return the set of discussions that is explicitly cohorted.  It may be
         the empty set.  Note that all inline discussions are automatically
         cohorted based on the course's is_cohorted setting.
+
+        Note: No longer used. See openedx.core.djangoapps.course_groups.models.CourseCohortSettings.
         """
         config = self.cohort_config
         if config is None:
@@ -1087,6 +1111,8 @@ class CourseDescriptor(CourseFields, SequenceDescriptor):
         This allow to change the default behavior of inline discussions cohorting. By
         setting this to False, all inline discussions are non-cohorted unless their
         ids are specified in cohorted_discussions.
+
+        Note: No longer used. See openedx.core.djangoapps.course_groups.models.CourseCohortSettings.
         """
         config = self.cohort_config
         if config is None:
@@ -1195,23 +1221,23 @@ class CourseDescriptor(CourseFields, SequenceDescriptor):
                 for module_descriptor in yield_descriptor_descendents(child):
                     yield module_descriptor
 
-        for c in self.get_children():
-            for s in c.get_children():
-                if s.graded:
-                    xmoduledescriptors = list(yield_descriptor_descendents(s))
-                    xmoduledescriptors.append(s)
+        for chapter in self.get_children():
+            for section in chapter.get_children():
+                if section.graded:
+                    xmoduledescriptors = list(yield_descriptor_descendents(section))
+                    xmoduledescriptors.append(section)
 
                     # The xmoduledescriptors included here are only the ones that have scores.
                     section_description = {
-                        'section_descriptor': s,
-                        'xmoduledescriptors': filter(lambda child: child.has_score, xmoduledescriptors)
+                        'section_descriptor': section,
+                        'xmoduledescriptors': [child for child in xmoduledescriptors if child.has_score]
                     }
 
-                    section_format = s.format if s.format is not None else ''
+                    section_format = section.format if section.format is not None else ''
                     graded_sections[section_format] = graded_sections.get(section_format, []) + [section_description]
 
                     all_descriptors.extend(xmoduledescriptors)
-                    all_descriptors.append(s)
+                    all_descriptors.append(section)
 
         return {'graded_sections': graded_sections,
                 'all_descriptors': all_descriptors, }

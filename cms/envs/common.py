@@ -138,9 +138,6 @@ FEATURES = {
     # Prerequisite courses feature flag
     'ENABLE_PREREQUISITE_COURSES': False,
 
-    # Toggle course milestones app/feature
-    'MILESTONES_APP': False,
-
     # Toggle course entrance exams feature
     'ENTRANCE_EXAMS': False,
 
@@ -166,7 +163,6 @@ GITHUB_REPO_ROOT = ENV_ROOT / "data"
 sys.path.append(REPO_ROOT)
 sys.path.append(PROJECT_ROOT / 'djangoapps')
 sys.path.append(COMMON_ROOT / 'djangoapps')
-sys.path.append(COMMON_ROOT / 'lib')
 
 # For geolocation ip database
 GEOIP_PATH = REPO_ROOT / "common/static/data/geoip/GeoIP.dat"
@@ -423,7 +419,7 @@ EMBARGO_SITE_REDIRECT_URL = None
 ############################### Pipeline #######################################
 STATICFILES_STORAGE = 'cms.lib.django_require.staticstorage.OptimizedCachedRequireJsStorage'
 
-from rooted_paths import rooted_glob
+from openedx.core.lib.rooted_paths import rooted_glob
 
 PIPELINE_CSS = {
     'style-vendor': {
@@ -581,8 +577,13 @@ REQUIRE_EXCLUDE = ("build.txt",)
 REQUIRE_ENVIRONMENT = "node"
 
 # If you want to enable Tender integration (http://tenderapp.com/),
-# put in the domain where Tender hosts tender_widget.js. For example,
-# TENDER_DOMAIN = "example.tenderapp.com"
+# put in the subdomain where Tender hosts tender_widget.js. For example,
+# if you want to use the URL https://example.tenderapp.com/tender_widget.js,
+# you should use "example".
+TENDER_SUBDOMAIN = None
+# If you want to have a vanity domain that points to Tender, put that here.
+# For example, "help.myapp.com". Otherwise, should should be your full
+# tenderapp domain name: for example, "example.tenderapp.com".
 TENDER_DOMAIN = None
 
 ################################# CELERY ######################################

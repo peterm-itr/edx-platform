@@ -18,6 +18,7 @@ class CourseMetadata(object):
     # Should not be used directly. Instead the filtered_list method should
     # be used if the field needs to be filtered depending on the feature flag.
     FILTERED_LIST = [
+        'cohort_config',
         'xml_attributes',
         'start',
         'end',
@@ -63,6 +64,10 @@ class CourseMetadata(object):
         # Do not show video_upload_pipeline if the feature is disabled.
         if not settings.FEATURES.get('ENABLE_VIDEO_UPLOAD_PIPELINE'):
             filtered_list.append('video_upload_pipeline')
+
+        # Do not show facebook_url if the feature is disabled.
+        if not settings.FEATURES.get('ENABLE_MOBILE_SOCIAL_FACEBOOK_FEATURES'):
+            filtered_list.append('facebook_url')
 
         return filtered_list
 

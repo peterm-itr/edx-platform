@@ -79,7 +79,7 @@ import instructor_analytics.basic
 import instructor_analytics.distributions
 import instructor_analytics.csvs
 import csv
-from openedx.core.djangoapps.user_api.models import UserPreference
+from openedx.core.djangoapps.user_api.preferences.api import get_user_preference, set_user_preference
 from instructor.views import INVOICE_KEY
 
 from submissions import api as sub_api  # installed from the edx-submissions repository
@@ -104,6 +104,7 @@ from .tools import (
 from opaque_keys.edx.keys import CourseKey
 from opaque_keys.edx.locations import SlashSeparatedCourseKey
 from opaque_keys import InvalidKeyError
+from openedx.core.djangoapps.course_groups.cohorts import is_course_cohorted
 
 log = logging.getLogger(__name__)
 
@@ -1002,7 +1003,7 @@ def get_students_features(request, course_id, csv=False):  # pylint: disable=red
         'goals': _('Goals'),
     }
 
-    if course.is_cohorted:
+    if is_course_cohorted(course.id):
         # Translators: 'Cohort' refers to a group of students within a course.
         query_features.append('cohort')
         query_features_names['cohort'] = _('Cohort')
@@ -1238,7 +1239,7 @@ def generate_registration_codes(request, course_id):
         invoice_copy = True
 
     sale_price = unit_price * course_code_number
-    UserPreference.set_preference(request.user, INVOICE_KEY, invoice_copy)
+    set_user_preference(request.user, INVOICE_KEY, invoice_copy)
     sale_invoice = Invoice.objects.create(
         total_amount=sale_price,
         company_name=company_name,
@@ -1938,10 +1939,13 @@ def calculate_grades_csv(request, course_id):
     course_key = SlashSeparatedCourseKey.from_deprecated_string(course_id)
     try:
         instructor_task.api.submit_calculate_grades_csv(request, course_key)
-        success_status = _("Your grade report is being generated! You can view the status of the generation task in the 'Pending Instructor Tasks' section.")
+        success_status = _("Your grade report is being generated! "
+                           "You can view the status of the generation task in the 'Pending Instructor Tasks' section.")
         return JsonResponse({"status": success_status})
     except AlreadyRunningError:
-        already_running_status = _("A grade report generation task is already in progress. Check the 'Pending Instructor Tasks' table for the status of the task. When completed, the report will be available for download in the table below.")
+        already_running_status = _("A grade report generation task is already in progress. "
+                                   "Check the 'Pending Instructor Tasks' table for the status of the task. "
+                                   "When completed, the report will be available for download in the table below.")
         return JsonResponse({
             "status": already_running_status
         })
@@ -2187,8 +2191,9 @@ def get_user_invoice_preference(request, course_id):  # pylint: disable=unused-a
     Gets invoice copy user's preferences.
     """
     invoice_copy_preference = True
-    if UserPreference.get_preference(request.user, INVOICE_KEY) is not None:
-        invoice_copy_preference = UserPreference.get_preference(request.user, INVOICE_KEY) == 'True'
+    invoice_preference_value = get_user_preference(request.user, INVOICE_KEY)
+    if invoice_preference_value is not None:
+        invoice_copy_preference = invoice_preference_value == 'True'
 
     return JsonResponse({
         'invoice_copy': invoice_copy_preference

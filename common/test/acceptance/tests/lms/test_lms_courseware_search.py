@@ -97,7 +97,7 @@ class CoursewareSearchTest(UniqueCourseTest):
         """
         self.course_outline.visit()
         subsection = self.course_outline.section_at(section_index).subsection_at(0)
-        subsection.toggle_expand()
+        subsection.expand_subsection()
         unit = subsection.unit_at(0)
         unit.publish()
 
@@ -117,7 +117,7 @@ class CoursewareSearchTest(UniqueCourseTest):
         # create a unit in course outline
         self.course_outline.visit()
         subsection = self.course_outline.section_at(section_index).subsection_at(0)
-        subsection.toggle_expand()
+        subsection.expand_subsection()
         subsection.add_unit()
 
         # got to unit and create an HTML component and save (not publish)

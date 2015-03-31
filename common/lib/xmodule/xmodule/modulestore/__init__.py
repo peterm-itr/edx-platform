@@ -119,6 +119,7 @@ class BulkOpsRecord(object):
     """
     def __init__(self):
         self._active_count = 0
+        self.has_publish_item = False
 
     @property
     def active(self):
@@ -281,6 +282,15 @@ class BulkOperationsMixin(object):
         """
         return self._get_bulk_ops_record(course_key, ignore_case).active
 
+    def send_bulk_published_signal(self, bulk_ops_record, course_id):
+        """
+        Sends out the signal that items have been published from within this course.
+        """
+        signal_handler = getattr(self, 'signal_handler', None)
+        if signal_handler and bulk_ops_record.has_publish_item:
+            signal_handler.send("course_published", course_key=course_id)
+            bulk_ops_record.has_publish_item = False
+
 
 class EditInfo(object):
     """
@@ -327,6 +337,8 @@ class EditInfo(object):
         # User ID which changed this XBlock last.
         self.edited_by = edit_info.get('edited_by', None)
 
+        # If this block has been copied from a library using copy_from_template,
+        # these fields point to the original block in the library, for analytics.
         self.original_usage = edit_info.get('original_usage', None)
         self.original_usage_version = edit_info.get('original_usage_version', None)
 
@@ -693,7 +705,7 @@ class ModuleStoreRead(ModuleStoreAssetBase):
         pass
 
     @abstractmethod
-    def get_item(self, usage_key, depth=0, **kwargs):
+    def get_item(self, usage_key, depth=0, using_descriptor_system=None, **kwargs):
         """
         Returns an XModuleDescriptor instance for the item at location.
 
@@ -827,7 +839,9 @@ class ModuleStoreRead(ModuleStoreAssetBase):
     def get_courses(self, **kwargs):
         '''
         Returns a list containing the top level XModuleDescriptors of the courses
-        in this modulestore.
+        in this modulestore. This method can take an optional argument 'org' which
+        will efficiently apply a filter so that only the courses of the specified
+        ORG in the CourseKey will be fetched.
         '''
         pass
 
@@ -1294,6 +1308,23 @@ class ModuleStoreWriteBase(ModuleStoreReadBase, ModuleStoreWrite):
         parent = self.get_item(parent_usage_key)
         parent.children.append(item.location)
         self.update_item(parent, user_id)
+
+    def _flag_publish_event(self, course_key):
+        """
+        Wrapper around calls to fire the course_published signal
+        Unless we're nested in an active bulk operation, this simply fires the signal
+        otherwise a publish will be signalled at the end of the bulk operation
+
+        Arguments:
+            course_key - course_key to which the signal applies
+        """
+        signal_handler = getattr(self, 'signal_handler', None)
+        if signal_handler:
+            bulk_record = self._get_bulk_ops_record(course_key) if isinstance(self, BulkOperationsMixin) else None
+            if bulk_record and bulk_record.active:
+                bulk_record.has_publish_item = True
+            else:
+                signal_handler.send("course_published", course_key=course_key)
 
 
 def only_xmodules(identifier, entry_points):

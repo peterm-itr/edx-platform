@@ -51,11 +51,6 @@ COPYRIGHT_YEAR = "2015"
 
 PLATFORM_FACEBOOK_ACCOUNT = "http://www.facebook.com/YourPlatformFacebookAccount"
 PLATFORM_TWITTER_ACCOUNT = "@YourPlatformTwitterAccount"
-PLATFORM_TWITTER_URL = "https://twitter.com/YourPlatformTwitterAccount"
-PLATFORM_MEETUP_URL = "http://www.meetup.com/YourMeetup"
-PLATFORM_LINKEDIN_URL = "http://www.linkedin.com/company/YourPlatform"
-PLATFORM_GOOGLE_PLUS_URL = "https://plus.google.com/YourGooglePlusAccount/"
-
 
 COURSEWARE_ENABLED = True
 ENABLE_JASMINE = False
@@ -80,10 +75,22 @@ FEATURES = {
     ## Doing so will cause all courses to be released on production
     'DISABLE_START_DATES': False,  # When True, all courses will be active, regardless of start date
 
-    # When True, will only publicly list courses by the subdomain. Expects you
-    # to define COURSE_LISTINGS, a dictionary mapping subdomains to lists of
-    # course_ids (see dev_int.py for an example)
+    # When True, will only publicly list courses by the subdomain.
     'SUBDOMAIN_COURSE_LISTINGS': False,
+    # Expects you to define COURSE_LISTINGS, a dictionary mapping
+    # subdomains to lists of course_ids
+    # COURSE_LISTINGS = {
+    #     'default': [
+    #         'BerkeleyX/CS169.1x/2012_Fall',
+    #         'HarvardX/CS50x/2012',
+    #         'MITx/3.091x/2012_Fall',
+    #     ],
+    #     'openedx': [
+    #         'BerkeleyX/CS169.1x/2012_Fall',
+    #     ],
+    # }
+    # To see it in action, add the following to your /etc/hosts file:
+    #     127.0.0.1 openedx.dev
 
     # When True, will override certain branding with university specific values
     # Expects a SUBDOMAIN_BRANDING dictionary that maps the subdomain to the
@@ -354,6 +361,12 @@ FEATURES = {
 
     # enable beacons for video timing statistics
     'ENABLE_VIDEO_BEACON': False,
+
+    # enable beacons for lms onload event statistics
+    'ENABLE_ONLOAD_BEACON': False,
+
+    # Certificates Web/HTML Views
+    'CERTIFICATES_HTML_VIEW': False,
 }
 
 THEME_NAME = 'unital'
@@ -384,7 +397,6 @@ DATA_DIR = COURSES_ROOT
 sys.path.append(REPO_ROOT)
 sys.path.append(PROJECT_ROOT / 'djangoapps')
 sys.path.append(COMMON_ROOT / 'djangoapps')
-sys.path.append(COMMON_ROOT / 'lib')
 
 # For Node.js
 
@@ -560,7 +572,7 @@ TRACKING_BACKENDS = {
 
 # We're already logging events, and we don't want to capture user
 # names/passwords.  Heartbeat events are likely not interesting.
-TRACKING_IGNORE_URL_PATTERNS = [r'^/event', r'^/login', r'^/heartbeat', r'^/segmentio/event']
+TRACKING_IGNORE_URL_PATTERNS = [r'^/event', r'^/login', r'^/heartbeat', r'^/segmentio/event', r'^/performance']
 
 EVENT_TRACKING_ENABLED = True
 EVENT_TRACKING_BACKENDS = {
@@ -986,7 +998,7 @@ X_FRAME_OPTIONS = 'ALLOW'
 
 STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
 
-from rooted_paths import rooted_glob
+from openedx.core.lib.rooted_paths import rooted_glob
 
 courseware_js = (
     [
@@ -1619,6 +1631,77 @@ MKTG_URL_LINK_MAP = {
     'WHAT_IS_VERIFIED_CERT': 'verified-certificate',
 }
 
+################# Social Media Footer Links #######################
+# The names list controls the order of social media
+# links in the footer.
+SOCIAL_MEDIA_FOOTER_NAMES = [
+    "facebook",
+    "twitter",
+    "linkedin",
+    "google_plus",
+    "tumblr",
+    "meetup",
+    "reddit",
+    "youtube",
+]
+
+# The footer URLs dictionary maps social footer names
+# to URLs defined in configuration.
+SOCIAL_MEDIA_FOOTER_URLS = {}
+
+# The display dictionary defines the title
+# and icon class for each social media link.
+SOCIAL_MEDIA_FOOTER_DISPLAY = {
+    "facebook": {
+        # Translators: This is the website name of www.facebook.com.  Please
+        # translate this the way that Facebook advertises in your language.
+        "title": _("Facebook"),
+        "icon": "fa-facebook-square"
+    },
+    "twitter": {
+        # Translators: This is the website name of www.twitter.com.  Please
+        # translate this the way that Twitter advertises in your language.
+        "title": _("Twitter"),
+        "icon": "fa-twitter"
+    },
+    "linkedin": {
+        # Translators: This is the website name of www.linkedin.com.  Please
+        # translate this the way that LinkedIn advertises in your language.
+        "title": _("LinkedIn"),
+        "icon": "fa-linkedin-square"
+    },
+    "google_plus": {
+        # Translators: This is the website name of plus.google.com.  Please
+        # translate this the way that Google+ advertises in your language.
+        "title": _("Google+"),
+        "icon": "fa-google-plus-square"
+    },
+    "tumblr": {
+        # Translators: This is the website name of www.tumblr.com.  Please
+        # translate this the way that Tumblr advertises in your language.
+        "title": _("Tumblr"),
+        "icon": "fa-tumblr-square"
+    },
+    "meetup": {
+        # Translators: This is the website name of www.meetup.com.  Please
+        # translate this the way that MeetUp advertises in your language.
+        "title": _("Meetup"),
+        "icon": "fa-calendar"
+    },
+    "reddit": {
+        # Translators: This is the website name of www.reddit.com.  Please
+        # translate this the way that Reddit advertises in your language.
+        "title": _("Reddit"),
+        "icon": "fa-reddit-square"
+    },
+    "youtube": {
+        # Translators: This is the website name of www.youtube.com.  Please
+        # translate this the way that YouTube advertises in your language.
+        "title": _("Youtube"),
+        "icon": "fa-youtube-square"
+    }
+}
+
 ################# Mobile URLS ##########################
 
 # These are URLs to the app store for mobile.
@@ -2006,9 +2089,12 @@ SEARCH_ENGINE = None
 # Use the LMS specific result processor
 SEARCH_RESULT_PROCESSOR = "lms.lib.courseware_search.lms_result_processor.LmsSearchResultProcessor"
 
-##### CDN EXPERIMENT/MONITORING FLAGS #####
-PERFORMANCE_GRAPHITE_URL = ''
+### PERFORMANCE EXPERIMENT SETTINGS ###
+# CDN experiment/monitoring flags
 CDN_VIDEO_URLS = {}
+
+# Page onload event sampling rate (min 0.0, max 1.0)
+ONLOAD_BEACON_SAMPLE_RATE = 0.0
 
 # The configuration visibility of account fields.
 ACCOUNT_VISIBILITY_CONFIGURATION = {
