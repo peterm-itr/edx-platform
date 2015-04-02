@@ -172,6 +172,11 @@ if settings.FEATURES.get('ENTRANCE_EXAMS'):
         url(r'^course/{}/entrance_exam/?$'.format(settings.COURSE_KEY_PATTERN), 'contentstore.views.entrance_exam'),
     )
 
+# e.unitalm.ru integration
+urlpatterns += (
+    url(r'^get_iframe_url/(.+)/$', 'unital_iframe.views.iframe_url'),
+)
+
 if settings.DEBUG:
     try:
         from .urls_dev import urlpatterns as dev_urlpatterns

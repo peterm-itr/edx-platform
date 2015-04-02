@@ -1,0 +1,13 @@
+---
+metadata:
+    display_name: Unital IFrame Tool
+    editor: raw
+data: |
+      <h2>Unital IFrame Tool</h2>
+      <p>Используя данный шаблон, вы можете добавлять в систему курсы с e.unitalm.ru. Для этого войдите в режим редактирования, и замените адрес "<b>example.com</b>" на адрес страницы, содержащей необходимый курс.</p>
+      <div class="unital-iframe-loader" style="display:none" data-url="example.com"></div>
+      <script type="text/javascript">// <![CDATA[
+      $( document ).ready(function() {
+          $(".unital-iframe-loader").unitalIframeUrl();
+      });
+      // ]]></script>

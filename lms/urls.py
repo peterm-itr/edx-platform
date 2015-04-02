@@ -416,7 +416,7 @@ if settings.COURSEWARE_ENABLED:
         # Student Notes
         url(r'^courses/{}/edxnotes'.format(settings.COURSE_ID_PATTERN),
             include('edxnotes.urls'), name="edxnotes_endpoints"),
-        url(r'^profile/', include('student_profile.urls')),
+        # url(r'^profile/', include('student_profile.urls')),
 
         # Company Representative Dashboard
         url(r'^representative-dashboard$', 'company.views.representative_dashboard', name='representative_dashboard'),
@@ -613,6 +613,11 @@ if settings.FEATURES.get('ENABLE_THIRD_PARTY_AUTH'):
         url(r'^login_oauth_token/(?P<backend>[^/]+)/$', 'student.views.login_oauth_token'),
     )
 
+
+# e.unitalm.ru integration
+urlpatterns += (
+    url(r'^get_iframe_url/(.+)/$', 'unital_iframe.views.iframe_url'),
+)
 
 urlpatterns = patterns(*urlpatterns)
 

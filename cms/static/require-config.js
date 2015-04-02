@@ -25,6 +25,7 @@ require.config({
         "jquery.iframe-transport": "js/vendor/jQuery-File-Upload/js/jquery.iframe-transport",
         "jquery.inputnumber": "js/vendor/html5-input-polyfills/number-polyfill",
         "jquery.immediateDescendents": "coffee/src/jquery.immediateDescendents",
+        "jquery.unitalIframeUrl": "coffee/src/unital/iframe_url",
         "datepair": "js/vendor/timepicker/datepair",
         "date": "js/vendor/date",
         "underscore": "js/vendor/underscore-min",
@@ -208,6 +209,9 @@ require.config({
             deps: ["jquery", "underscore"]
         },
         "jquery.immediateDescendents": {
+            deps: ["jquery"]
+        },
+        "jquery.unitalIframeUrl": {
             deps: ["jquery"]
         },
         "xblock/core": {

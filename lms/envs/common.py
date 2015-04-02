@@ -1591,6 +1591,9 @@ INSTALLED_APPS = (
     'cors_csrf',
 
     'commerce',
+
+    # e.unitalm.ru integration
+    'unital_iframe',
 )
 
 ######################### CSRF #########################################
