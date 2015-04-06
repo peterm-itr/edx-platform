@@ -11,3 +11,11 @@ data: |
           $(".unital-iframe-loader").unitalIframeUrl();
       });
       // ]]></script>
+      <style>
+        .course-index {
+            width: 278px !important;
+        }
+        .course-wrapper .course-content {
+          width: 1115px !important;
+        }
+      </style>

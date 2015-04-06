@@ -5,7 +5,7 @@ jQuery.fn.unitalIframeUrl = ->
     $.get("/get_iframe_url/#{btoa(url)}", (data) ->
       iframe_url = data['iframe_url']
       if iframe_url
-        $iframe = $("<iframe src='#{iframe_url}' style='height:685px;width:1018px;max-width: 100%;'></iframe>")
+        $iframe = $("<iframe src='#{iframe_url}' style='height:685px;width:1035px;max-width: 100%;'></iframe>")
         $element.after($iframe)
       else
         console.error "Cannot fetch iframe's address. Perhaps you entered invalid url?"
