@@ -7,11 +7,9 @@ import logging
 import decimal
 import datetime
 from collections import namedtuple
+
 from pytz import UTC
 from ipware.ip import get_ip
-
-from edxmako.shortcuts import render_to_response, render_to_string
-
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import (
@@ -26,11 +24,17 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
+from opaque_keys.edx.keys import CourseKey, UsageKey
+from opaque_keys import InvalidKeyError
+from xmodule.modulestore.django import modulestore
+from xmodule.modulestore.exceptions import ItemNotFoundError, NoPathToItem
 
+from edxmako.shortcuts import render_to_response, render_to_string
 from openedx.core.djangoapps.user_api.accounts.api import get_account_settings, update_account_settings
 from openedx.core.djangoapps.user_api.accounts import NAME_MIN_LENGTH
-from openedx.core.djangoapps.user_api.api.account import AccountUserNotFound, AccountValidationError
-
+from openedx.core.djangoapps.user_api.errors import UserNotFound, AccountValidationError
+from commerce.api import EcommerceAPI
+from commerce.exceptions import ApiError
 from course_modes.models import CourseMode
 from student.models import CourseEnrollment
 from student.views import reverification_info
@@ -40,25 +44,28 @@ from shoppingcart.processors import (
 )
 from verify_student.models import (
     SoftwareSecurePhotoVerification,
-)
+    VerificationCheckpoint,
+    VerificationStatus,
+    InCourseReverificationConfiguration)
 from reverification.models import MidcourseReverificationWindow
 import ssencrypt
-from xmodule.modulestore.exceptions import ItemNotFoundError
-from opaque_keys.edx.keys import CourseKey
 from .exceptions import WindowExpiredException
-from xmodule.modulestore.django import modulestore
 from microsite_configuration import microsite
-
 from embargo import api as embargo_api
-
 from util.json_request import JsonResponse
 from util.date_utils import get_default_time_display
+from eventtracking import tracker
+import analytics
+from courseware.url_helpers import get_redirect_url
 
 log = logging.getLogger(__name__)
 
 EVENT_NAME_USER_ENTERED_MIDCOURSE_REVERIFY_VIEW = 'edx.course.enrollment.reverify.started'
 EVENT_NAME_USER_SUBMITTED_MIDCOURSE_REVERIFY = 'edx.course.enrollment.reverify.submitted'
 EVENT_NAME_USER_REVERIFICATION_REVIEWED_BY_SOFTWARESECURE = 'edx.course.enrollment.reverify.reviewed'
+
+EVENT_NAME_USER_ENTERED_INCOURSE_REVERIFY_VIEW = 'edx.bi.reverify.started'
+EVENT_NAME_USER_SUBMITTED_INCOURSE_REVERIFY = 'edx.bi.reverify.submitted'
 
 
 class PayAndVerifyView(View):
@@ -370,6 +377,9 @@ class PayAndVerifyView(View):
         # so we can fire an analytics event upon payment.
         request.session['attempting_upgrade'] = (message == self.UPGRADE_MSG)
 
+        # Determine the photo verification status
+        verification_good_until = self._verification_valid_until(request.user)
+
         # Render the top-level page
         context = {
             'contribution_amount': contribution_amount,
@@ -390,6 +400,8 @@ class PayAndVerifyView(View):
                 get_default_time_display(unexpired_paid_course_mode.expiration_datetime)
                 if unexpired_paid_course_mode.expiration_datetime else ""
             ),
+            'already_verified': already_verified,
+            'verification_good_until': verification_good_until,
         }
         return render_to_response("verify_student/pay_and_verify.html", context)
 
@@ -573,6 +585,26 @@ class PayAndVerifyView(View):
 
         return all_requirements
 
+    def _verification_valid_until(self, user, date_format="%m/%d/%Y"):
+        """
+        Check whether the user has a valid or pending verification.
+
+        Arguments:
+            user:
+            date_format: optional parameter for formatting datetime
+                object to string in response
+
+        Returns:
+            datetime object in string format
+        """
+        photo_verifications = SoftwareSecurePhotoVerification.verification_valid_or_pending(user)
+        # return 'expiration_datetime' of latest photo verification if found,
+        # otherwise implicitly return ''
+        if photo_verifications:
+            return photo_verifications[0].expiration_datetime.strftime(date_format)
+
+        return ''
+
     def _check_already_verified(self, user):
         """Check whether the user has a valid or pending verification.
 
@@ -610,6 +642,21 @@ class PayAndVerifyView(View):
             has_paid = (course_mode and course_mode.min_price > 0)
 
         return (has_paid, bool(is_active))
+
+
+def create_order_with_ecommerce_service(user, course_key, course_mode):     # pylint: disable=invalid-name
+    """ Create a new order using the E-Commerce API. """
+    try:
+        api = EcommerceAPI()
+        # Make an API call to create the order and retrieve the results
+        _order_number, _order_status, data = api.create_order(user, course_mode.sku)
+
+        # Pass the payment parameters directly from the API response.
+        return HttpResponse(json.dumps(data['payment_parameters']), content_type='application/json')
+    except ApiError:
+        params = {'username': user.username, 'mode': course_mode.slug, 'course_id': unicode(course_key)}
+        log.error('Failed to create order for %(username)s %(mode)s mode of %(course_id)s', params)
+        raise
 
 
 @require_POST
@@ -676,6 +723,9 @@ def create_order(request):
     if amount < current_mode.min_price:
         return HttpResponseBadRequest(_("No selected price or selected price is below minimum."))
 
+    if current_mode.sku:
+        return create_order_with_ecommerce_service(request.user, course_id, current_mode)
+
     # I know, we should check this is valid. All kinds of stuff missing here
     cart = Order.get_cart_for_user(request.user)
     cart.clear()
@@ -734,7 +784,7 @@ def submit_photos_for_verification(request):
     if request.POST.get('full_name'):
         try:
             update_account_settings(request.user, {"name": request.POST.get('full_name')})
-        except AccountUserNotFound:
+        except UserNotFound:
             return HttpResponseBadRequest(_("No profile found for user"))
         except AccountValidationError:
             msg = _(
@@ -828,15 +878,20 @@ def results_callback(request):
         log.error("Software Secure posted back for receipt_id {}, but not found".format(receipt_id))
         return HttpResponseBadRequest("edX ID {} not found".format(receipt_id))
 
+    checkpoints = VerificationCheckpoint.objects.filter(photo_verification=attempt).all()
+
     if result == "PASS":
         log.debug("Approving verification for {}".format(receipt_id))
         attempt.approve()
+        status = "approved"
     elif result == "FAIL":
         log.debug("Denying verification for {}".format(receipt_id))
         attempt.deny(json.dumps(reason), error_code=error_code)
+        status = "denied"
     elif result == "SYSTEM FAIL":
         log.debug("System failure for {} -- resetting to must_retry".format(receipt_id))
         attempt.system_error(json.dumps(reason), error_code=error_code)
+        status = "error"
         log.error("Software Secure callback attempt for %s failed: %s", receipt_id, reason)
     else:
         log.error("Software Secure returned unknown result {}".format(result))
@@ -849,7 +904,7 @@ def results_callback(request):
         course_id = attempt.window.course_id
         course_enrollment = CourseEnrollment.get_or_create_enrollment(attempt.user, course_id)
         course_enrollment.emit_event(EVENT_NAME_USER_REVERIFICATION_REVIEWED_BY_SOFTWARESECURE)
-
+    VerificationStatus.add_status_from_checkpoints(checkpoints=checkpoints, user=attempt.user, status=status)
     return HttpResponse("OK!")
 
 
@@ -1047,3 +1102,153 @@ def reverification_window_expired(_request):
     """
     # TODO need someone to review the copy for this template
     return render_to_response("verify_student/reverification_window_expired.html")
+
+
+class InCourseReverifyView(View):
+    """
+    The in-course reverification view.
+    Needs to perform these functions:
+        - take new face photo
+        - retrieve the old id photo
+        - submit these photos to photo verification service
+
+    Does not need to worry about pricing
+    """
+    @method_decorator(login_required)
+    def get(self, request, course_id, checkpoint_name, usage_id):
+        """ Display the view for face photo submission"""
+        # Check the in-course re-verification is enabled or not
+
+        incourse_reverify_enabled = InCourseReverificationConfiguration.current().enabled
+        if not incourse_reverify_enabled:
+            raise Http404
+
+        user = request.user
+        course_key = CourseKey.from_string(course_id)
+        course = modulestore().get_course(course_key)
+        if course is None:
+            raise Http404
+
+        checkpoint = VerificationCheckpoint.get_verification_checkpoint(course_key, checkpoint_name)
+        if checkpoint is None:
+            raise Http404
+
+        init_verification = SoftwareSecurePhotoVerification.get_initial_verification(user)
+        if not init_verification:
+            return redirect(reverse('verify_student_verify_later', kwargs={'course_id': unicode(course_key)}))
+
+        # emit the reverification event
+        self._track_reverification_events(
+            EVENT_NAME_USER_ENTERED_INCOURSE_REVERIFY_VIEW, user.id, course_id, checkpoint_name
+        )
+
+        context = {
+            'course_key': unicode(course_key),
+            'course_name': course.display_name_with_default,
+            'checkpoint_name': checkpoint_name,
+            'platform_name': settings.PLATFORM_NAME,
+            'usage_id': usage_id
+        }
+        return render_to_response("verify_student/incourse_reverify.html", context)
+
+    @method_decorator(login_required)
+    def post(self, request, course_id, checkpoint_name, usage_id):
+        """Submits the re-verification attempt to SoftwareSecure
+
+        Args:
+            request(HttpRequest): HttpRequest object
+            course_id(str): Course Id
+            checkpoint_name(str): Checkpoint name
+
+        Returns:
+            HttpResponse with status_code 400 if photo is missing or any error
+            or redirect to verify_student_verify_later url if initial verification doesn't exist otherwise
+            HttpsResponse with status code 200
+        """
+        # Check the in-course re-verification is enabled or not
+        incourse_reverify_enabled = InCourseReverificationConfiguration.current().enabled
+        if not incourse_reverify_enabled:
+            raise Http404
+
+        user = request.user
+        try:
+            course_key = CourseKey.from_string(course_id)
+            usage_key = UsageKey.from_string(usage_id).replace(course_key=course_key)
+        except InvalidKeyError:
+            raise Http404(u"Invalid course_key or usage_key")
+        course = modulestore().get_course(course_key)
+        checkpoint = VerificationCheckpoint.get_verification_checkpoint(course_key, checkpoint_name)
+        if checkpoint is None:
+            log.error("Checkpoint is not defined. Could not submit verification attempt for user %s",
+                      request.user.id)
+            context = {
+                'course_key': unicode(course_key),
+                'course_name': course.display_name_with_default,
+                'checkpoint_name': checkpoint_name,
+                'error': True,
+                'errorMsg': _("No checkpoint found"),
+                'platform_name': settings.PLATFORM_NAME,
+                'usage_id': usage_id
+            }
+            return render_to_response("verify_student/incourse_reverify.html", context)
+        init_verification = SoftwareSecurePhotoVerification.get_initial_verification(user)
+        if not init_verification:
+            log.error("Could not submit verification attempt for user %s", request.user.id)
+            return redirect(reverse('verify_student_verify_later', kwargs={'course_id': unicode(course_key)}))
+
+        try:
+            attempt = SoftwareSecurePhotoVerification.submit_faceimage(
+                request.user, request.POST['face_image'], init_verification.photo_id_key
+            )
+            checkpoint.add_verification_attempt(attempt)
+            VerificationStatus.add_verification_status(checkpoint, user, "submitted")
+
+            # emit the reverification event
+            self._track_reverification_events(
+                EVENT_NAME_USER_SUBMITTED_INCOURSE_REVERIFY, user.id, course_id, checkpoint_name
+            )
+
+            try:
+                redirect_url = get_redirect_url(course_key, usage_key)
+            except (ItemNotFoundError, NoPathToItem):
+                redirect_url = reverse("courseware", args=(unicode(course_key),))
+
+            return JsonResponse({'url': redirect_url})
+        except Http404 as expt:
+            log.exception("Invalid location during photo verification.")
+            return HttpResponseBadRequest(expt.message)
+        except IndexError:
+            log.exception("Invalid image data during photo verification.")
+            return HttpResponseBadRequest(_("Invalid image data during photo verification."))
+        except Exception:  # pylint: disable=broad-except
+            log.exception("Could not submit verification attempt for user %s.", request.user.id)
+            msg = _("Could not submit photos")
+            return HttpResponseBadRequest(msg)
+
+    def _track_reverification_events(self, event_name, user_id, course_id, checkpoint):  # pylint: disable=invalid-name
+        """Track re-verification events for user against course checkpoints
+
+        Arguments:
+            user_id (str): The ID of the user generting the certificate.
+            course_id (unicode):  id associated with the course
+            checkpoint (str):  checkpoint name
+        Returns:
+            None
+
+        """
+        if settings.FEATURES.get('SEGMENT_IO_LMS') and hasattr(settings, 'SEGMENT_IO_LMS_KEY'):
+            tracking_context = tracker.get_tracker().resolve_context()
+            analytics.track(
+                user_id,
+                event_name,
+                {
+                    'category': "verification",
+                    'label': unicode(course_id),
+                    'checkpoint': checkpoint
+                },
+                context={
+                    'Google Analytics': {
+                        'clientId': tracking_context.get('client_id')
+                    }
+                }
+            )

@@ -7,8 +7,8 @@ from bok_choy.promise import EmptyPromise
 from selenium.webdriver.support.select import Select
 from .component_editor import ComponentEditorView
 from .container import XBlockWrapper
+from ...pages.studio.users import UsersPageMixin
 from ...pages.studio.pagination import PaginatedMixin
-from ...tests.helpers import disable_animations
 from .utils import confirm_prompt, wait_for_notification
 from . import BASE_URL
 
@@ -35,7 +35,7 @@ class LibraryPage(PageObject):
         return self.q(css='body.view-library').present
 
 
-class LibraryEditPage(LibraryPage, PaginatedMixin):
+class LibraryEditPage(LibraryPage, PaginatedMixin, UsersPageMixin):
     """
     Library edit page in Studio
     """
@@ -56,11 +56,7 @@ class LibraryEditPage(LibraryPage, PaginatedMixin):
         for improved test reliability.
         """
         self.wait_for_ajax()
-        self.wait_for_element_invisibility(
-            '.ui-loading',
-            'Wait for the page to complete its initial loading of XBlocks via AJAX'
-        )
-        disable_animations(self)
+        super(LibraryEditPage, self).wait_until_ready()
 
     @property
     def xblocks(self):
@@ -68,6 +64,25 @@ class LibraryEditPage(LibraryPage, PaginatedMixin):
         Return a list of xblocks loaded on the container page.
         """
         return self._get_xblocks()
+
+    def are_previews_showing(self):
+        """
+        Determines whether or not previews are showing for XBlocks
+        """
+        return all([not xblock.is_placeholder() for xblock in self.xblocks])
+
+    def toggle_previews(self):
+        """
+        Clicks the preview toggling button and waits for the previews to appear or disappear.
+        """
+        toggle = not self.are_previews_showing()
+        self.q(css='.toggle-preview-button').click()
+        EmptyPromise(
+            lambda: self.are_previews_showing() == toggle,
+            'Preview is visible: %s' % toggle,
+            timeout=30
+        ).fulfill()
+        self.wait_until_ready()
 
     def click_duplicate_button(self, xblock_id):
         """
@@ -127,6 +142,7 @@ class StudioLibraryContentEditor(ComponentEditorView):
 
     @property
     def library_name(self):
+        """ Gets name of library """
         return self.get_selected_option_text(self.LIBRARY_LABEL)
 
     @library_name.setter
@@ -241,7 +257,9 @@ class StudioLibraryContainerXBlockWrapper(XBlockWrapper):
 
         # This causes a reload (see cms/static/xmodule_js/public/js/library_content_edit.js)
         self.wait_for(lambda: self.is_browser_on_page(), 'StudioLibraryContainerXBlockWrapper has reloaded.')
-        self.wait_for(lambda: self.is_finished_loading(), 'Loading indicator is not visible.')
+        # Wait longer than the default 60 seconds, because this was intermittently failing on jenkins
+        # with the screenshot showing that the Loading indicator was still visible. See TE-745.
+        self.wait_for(lambda: self.is_finished_loading(), 'Loading indicator is not visible.', timeout=120)
 
         # And wait to make sure the ajax post has finished.
         self.wait_for_ajax()

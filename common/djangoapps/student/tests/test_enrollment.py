@@ -103,7 +103,7 @@ class EnrollmentTest(UrlResetMixin, ModuleStoreTestCase):
         self.assertFalse(CourseEnrollment.is_enrolled(self.user, self.course.id))
 
     @patch.dict(settings.FEATURES, {'ENABLE_MKTG_EMAIL_OPT_IN': True})
-    @patch('openedx.core.djangoapps.user_api.api.profile.update_email_opt_in')
+    @patch('openedx.core.djangoapps.user_api.preferences.api.update_email_opt_in')
     @ddt.data(
         ([], 'true'),
         ([], 'false'),
@@ -194,7 +194,7 @@ class EnrollmentTest(UrlResetMixin, ModuleStoreTestCase):
         """Change the student's enrollment status in a course.
 
         Args:
-            action (string): The action to perform (either "enroll" or "unenroll")
+            action (str): The action to perform (either "enroll" or "unenroll")
 
         Keyword Args:
             course_id (unicode): If provided, use this course ID.  Otherwise, use the

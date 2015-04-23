@@ -3,13 +3,14 @@
 Tests of verify_student views.
 """
 import json
-import mock
 import urllib
-import decimal
+from datetime import timedelta, datetime
+from uuid import uuid4
+
+from django.test.utils import override_settings
+import mock
 from mock import patch, Mock
 import pytz
-from datetime import timedelta, datetime
-
 import ddt
 from django.test.client import Client
 from django.test import TestCase
@@ -18,14 +19,16 @@ from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.core import mail
 from bs4 import BeautifulSoup
-
-from openedx.core.djangoapps.user_api.accounts.api import get_account_settings
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
-from xmodule.modulestore.tests.factories import CourseFactory
+from xmodule.modulestore.tests.factories import CourseFactory, ItemFactory
 from xmodule.modulestore.django import modulestore
 from xmodule.modulestore import ModuleStoreEnum
 from opaque_keys.edx.locations import SlashSeparatedCourseKey
 from opaque_keys.edx.locator import CourseLocator
+
+from openedx.core.djangoapps.user_api.accounts.api import get_account_settings
+from commerce.exceptions import ApiError
+from commerce.tests import EcommerceApiTestMixin
 from student.tests.factories import UserFactory, CourseEnrollmentFactory
 from student.models import CourseEnrollment
 from course_modes.tests.factories import CourseModeFactory
@@ -33,8 +36,14 @@ from course_modes.models import CourseMode
 from shoppingcart.models import Order, CertificateItem
 from embargo.test_utils import restrict_course
 from util.testing import UrlResetMixin
-from verify_student.views import render_to_response, PayAndVerifyView
-from verify_student.models import SoftwareSecurePhotoVerification
+from verify_student.views import (
+    render_to_response, PayAndVerifyView, EVENT_NAME_USER_ENTERED_INCOURSE_REVERIFY_VIEW,
+    EVENT_NAME_USER_SUBMITTED_INCOURSE_REVERIFY
+)
+from verify_student.models import (
+    SoftwareSecurePhotoVerification, VerificationCheckpoint,
+    InCourseReverificationConfiguration
+)
 from reverification.tests.factories import MidcourseReverificationWindowFactory
 
 
@@ -840,7 +849,7 @@ class TestPayAndVerifyView(UrlResetMixin, ModuleStoreTestCase):
         self.assertEqual(response_dict['course_name'], mode_display_name)
 
 
-class TestCreateOrder(ModuleStoreTestCase):
+class TestCreateOrder(EcommerceApiTestMixin, ModuleStoreTestCase):
     """
     Tests for the create order view.
     """
@@ -851,20 +860,27 @@ class TestCreateOrder(ModuleStoreTestCase):
         self.user = UserFactory.create(username="test", password="test")
         self.course = CourseFactory.create()
         for mode, min_price in (('audit', 0), ('honor', 0), ('verified', 100)):
-            CourseModeFactory(mode_slug=mode, course_id=self.course.id, min_price=min_price)
+            # Set SKU to empty string to ensure view knows how to handle such values
+            CourseModeFactory(mode_slug=mode, course_id=self.course.id, min_price=min_price, sku='')
         self.client.login(username="test", password="test")
+
+    def _post(self, data):
+        """
+        POST to the view being tested and return the response.
+        """
+        url = reverse('verify_student_create_order')
+        return self.client.post(url, data)
 
     def test_create_order_already_verified(self):
         # Verify the student so we don't need to submit photos
         self._verify_student()
 
         # Create an order
-        url = reverse('verify_student_create_order')
         params = {
             'course_id': unicode(self.course.id),
             'contribution': 100
         }
-        response = self.client.post(url, params)
+        response = self._post(params)
         self.assertEqual(response.status_code, 200)
 
         # Verify that the information will be sent to the correct callback URL
@@ -885,11 +901,8 @@ class TestCreateOrder(ModuleStoreTestCase):
         CourseModeFactory(mode_slug="professional", course_id=course.id, min_price=10)
 
         # Create an order for a prof ed course
-        url = reverse('verify_student_create_order')
-        params = {
-            'course_id': unicode(course.id)
-        }
-        response = self.client.post(url, params)
+        params = {'course_id': unicode(course.id)}
+        response = self._post(params)
         self.assertEqual(response.status_code, 200)
 
         # Verify that the course ID and transaction type are included in "merchant-defined data"
@@ -904,11 +917,8 @@ class TestCreateOrder(ModuleStoreTestCase):
         CourseModeFactory(mode_slug="no-id-professional", course_id=course.id, min_price=10)
 
         # Create an order for a prof ed course
-        url = reverse('verify_student_create_order')
-        params = {
-            'course_id': unicode(course.id)
-        }
-        response = self.client.post(url, params)
+        params = {'course_id': unicode(course.id)}
+        response = self._post(params)
         self.assertEqual(response.status_code, 200)
 
         # Verify that the course ID and transaction type are included in "merchant-defined data"
@@ -924,11 +934,8 @@ class TestCreateOrder(ModuleStoreTestCase):
         CourseModeFactory(mode_slug="professional", course_id=course.id, min_price=10)
 
         # Create an order for a prof ed course
-        url = reverse('verify_student_create_order')
-        params = {
-            'course_id': unicode(course.id)
-        }
-        response = self.client.post(url, params)
+        params = {'course_id': unicode(course.id)}
+        response = self._post(params)
         self.assertEqual(response.status_code, 200)
 
         # Verify that the course ID and transaction type are included in "merchant-defined data"
@@ -941,12 +948,11 @@ class TestCreateOrder(ModuleStoreTestCase):
         self._verify_student()
 
         # Create an order
-        url = reverse('verify_student_create_order')
         params = {
             'course_id': unicode(self.course.id),
             'contribution': '1.23'
         }
-        self.client.post(url, params)
+        self._post(params)
 
         # Verify that the client's session contains the new donation amount
         self.assertNotIn('donation_for_course', self.client.session)
@@ -957,6 +963,52 @@ class TestCreateOrder(ModuleStoreTestCase):
         attempt.mark_ready()
         attempt.submit()
         attempt.approve()
+
+    @override_settings(ECOMMERCE_API_URL=EcommerceApiTestMixin.ECOMMERCE_API_URL,
+                       ECOMMERCE_API_SIGNING_KEY=EcommerceApiTestMixin.ECOMMERCE_API_SIGNING_KEY)
+    def test_create_order_with_ecommerce_api(self):
+        """ Verifies that the view communicates with the E-Commerce API to create orders. """
+        # Keep track of the original number of orders to verify the old code is not being called.
+        order_count = Order.objects.count()
+
+        # Add SKU to CourseModes
+        for course_mode in CourseMode.objects.filter(course_id=self.course.id):
+            course_mode.sku = uuid4().hex.decode('ascii')
+            course_mode.save()
+
+        # Mock the E-Commerce Service response
+        with self.mock_create_order():
+            self._verify_student()
+            params = {'course_id': unicode(self.course.id), 'contribution': 100}
+            response = self._post(params)
+
+        # Verify the response is correct.
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/json')
+        self.assertEqual(json.loads(response.content), self.ECOMMERCE_API_SUCCESSFUL_BODY['payment_parameters'])
+
+        # Verify old code is not called (e.g. no Order object created in LMS)
+        self.assertEqual(order_count, Order.objects.count())
+
+    def _add_course_mode_skus(self):
+        """ Add SKUs to the CourseMode objects for self.course. """
+        for course_mode in CourseMode.objects.filter(course_id=self.course.id):
+            course_mode.sku = uuid4().hex.decode('ascii')
+            course_mode.save()
+
+    @override_settings(ECOMMERCE_API_URL=EcommerceApiTestMixin.ECOMMERCE_API_URL,
+                       ECOMMERCE_API_SIGNING_KEY=EcommerceApiTestMixin.ECOMMERCE_API_SIGNING_KEY)
+    def test_create_order_with_ecommerce_api_errors(self):
+        """
+        Verifies that the view communicates with the E-Commerce API to create orders, and handles errors
+        appropriately.
+        """
+        self._add_course_mode_skus()
+
+        with self.mock_create_order(side_effect=ApiError):
+            self._verify_student()
+            params = {'course_id': unicode(self.course.id), 'contribution': 100}
+            self.assertRaises(ApiError, self._post, params)
 
 
 class TestCreateOrderView(ModuleStoreTestCase):
@@ -1640,3 +1692,201 @@ class TestReverificationBanner(ModuleStoreTestCase):
         self.client.post(reverse('verify_student_toggle_failed_banner_off'))
         photo_verification = SoftwareSecurePhotoVerification.objects.get(user=self.user, window=self.window)
         self.assertFalse(photo_verification.display)
+
+
+class TestInCourseReverifyView(ModuleStoreTestCase):
+    """
+    Tests for the incourse reverification views.
+    """
+    IMAGE_DATA = "abcd,1234"
+    MIDTERM = "midterm"
+
+    def build_course(self):
+        """
+        Build up a course tree with a Reverificaiton xBlock.
+        """
+        # pylint: disable=attribute-defined-outside-init
+
+        self.course_key = SlashSeparatedCourseKey("Robot", "999", "Test_Course")
+        self.course = CourseFactory.create(org='Robot', number='999', display_name='Test Course')
+
+        # Create the course modes
+        for mode in ('audit', 'honor', 'verified'):
+            min_price = 0 if mode in ["honor", "audit"] else 1
+            CourseModeFactory(mode_slug=mode, course_id=self.course_key, min_price=min_price)
+
+        # Create the 'edx-reverification-block' in course tree
+        section = ItemFactory.create(parent=self.course, category='chapter', display_name='Test Section')
+        subsection = ItemFactory.create(parent=section, category='sequential', display_name='Test Subsection')
+        vertical = ItemFactory.create(parent=subsection, category='vertical', display_name='Test Unit')
+        reverification = ItemFactory.create(
+            parent=vertical,
+            category='edx-reverification-block',
+            display_name='Test Verification Block'
+        )
+        self.section_location = section.location
+        self.subsection_location = subsection.location
+        self.vertical_location = vertical.location
+        self.reverification_location = reverification.location
+
+    def setUp(self):
+        super(TestInCourseReverifyView, self).setUp()
+
+        self.build_course()
+
+        self.user = UserFactory.create(username="rusty", password="test")
+        self.client.login(username="rusty", password="test")
+
+        # Enroll the user in the default mode (honor) to emulate
+        CourseEnrollment.enroll(self.user, self.course_key, mode="verified")
+        self.config = InCourseReverificationConfiguration(enabled=True)
+        self.config.save()
+
+        # mocking and patching for bi events
+        analytics_patcher = patch('verify_student.views.analytics')
+        self.mock_tracker = analytics_patcher.start()
+        self.addCleanup(analytics_patcher.stop)
+
+    @patch.dict(settings.FEATURES, {'AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING': True})
+    def test_incourse_reverify_feature_flag_get(self):
+        self.config.enabled = False
+        self.config.save()
+        response = self.client.get(self._get_url(self.course_key, self.MIDTERM))
+        self.assertEquals(response.status_code, 404)
+
+    @patch.dict(settings.FEATURES, {'AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING': True})
+    def test_incourse_reverify_invalid_course_get(self):
+        response = self.client.get(self._get_url("invalid/course/key", self.MIDTERM))
+
+        self.assertEquals(response.status_code, 404)
+
+    @patch.dict(settings.FEATURES, {'AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING': True})
+    def test_incourse_reverify_invalid_checkpoint_get(self):
+        response = self.client.get(self._get_url(self.course_key, "invalid_checkpoint"))
+        self.assertEquals(response.status_code, 404)
+
+    @patch.dict(settings.FEATURES, {'AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING': True})
+    def test_incourse_reverify_initial_redirect_get(self):
+        self._create_checkpoint()
+        response = self.client.get(self._get_url(self.course_key, self.MIDTERM))
+
+        url = reverse('verify_student_verify_later',
+                      kwargs={"course_id": unicode(self.course_key)})
+        self.assertRedirects(response, url)
+
+    @override_settings(SEGMENT_IO_LMS_KEY="foobar")
+    @patch.dict(settings.FEATURES, {'AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING': True, 'SEGMENT_IO_LMS': True})
+    def test_incourse_reverify_get(self):
+        self._create_checkpoint()
+        self._create_initial_verification()
+
+        response = self.client.get(self._get_url(self.course_key, self.MIDTERM))
+        self.assertEquals(response.status_code, 200)
+
+        #Verify Google Analytics event fired after successfully submiting the picture
+        self.mock_tracker.track.assert_called_once_with(  # pylint: disable=no-member
+            self.user.id,  # pylint: disable=no-member
+            EVENT_NAME_USER_ENTERED_INCOURSE_REVERIFY_VIEW,
+            {
+                'category': "verification",
+                'label': unicode(self.course_key),
+                'checkpoint': self.MIDTERM
+            },
+
+            context={
+                'Google Analytics':
+                {'clientId': None}
+            }
+        )
+        self.mock_tracker.reset_mock()
+
+    @patch.dict(settings.FEATURES, {'AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING': True})
+    @patch('verify_student.views.render_to_response', render_mock)
+    def test_invalid_checkpoint_post(self):
+
+        response = self.client.post(self._get_url(self.course_key, self.MIDTERM))
+        self.assertEquals(response.status_code, 200)
+        ((template, context), _kwargs) = render_mock.call_args  # pylint: disable=unpacking-non-sequence
+        self.assertIn('incourse_reverify', template)
+        self.assertTrue(context['error'])
+
+    @patch.dict(settings.FEATURES, {'AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING': True})
+    def test_incourse_reverify_initial_redirect_post(self):
+        self._create_checkpoint()
+
+        response = self.client.post(self._get_url(self.course_key, self.MIDTERM))
+        url = reverse('verify_student_verify_later',
+                      kwargs={"course_id": unicode(self.course_key)})
+
+        self.assertRedirects(response, url)
+
+    @patch.dict(settings.FEATURES, {'AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING': True})
+    def test_incourse_reverify_index_error_post(self):
+        self._create_checkpoint()
+        self._create_initial_verification()
+
+        response = self.client.post(self._get_url(self.course_key, self.MIDTERM), {"face_image": ""})
+        self.assertEqual(response.status_code, 400)
+
+    @override_settings(SEGMENT_IO_LMS_KEY="foobar")
+    @patch.dict(settings.FEATURES, {'AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING': True, 'SEGMENT_IO_LMS': True})
+    def test_incourse_reverify_post(self):
+        self._create_checkpoint()
+        self._create_initial_verification()
+
+        response = self.client.post(self._get_url(self.course_key, self.MIDTERM), {"face_image": self.IMAGE_DATA})
+        self.assertEqual(response.status_code, 200)
+
+        #Verify Google Analytics event fired after successfully submiting the picture
+        self.mock_tracker.track.assert_called_once_with(  # pylint: disable=no-member
+            self.user.id,  # pylint: disable=no-member
+            EVENT_NAME_USER_SUBMITTED_INCOURSE_REVERIFY,
+            {
+                'category': "verification",
+                'label': unicode(self.course_key),
+                'checkpoint': self.MIDTERM
+            },
+
+            context={
+                'Google Analytics':
+                {'clientId': None}
+            }
+        )
+        self.mock_tracker.reset_mock()
+
+    @patch.dict(settings.FEATURES, {'AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING': True})
+    def test_incourse_reverify_feature_flag_post(self):
+        self.config.enabled = False
+        self.config.save()
+
+        response = self.client.post(self._get_url(self.course_key, self.MIDTERM))
+        self.assertEquals(response.status_code, 404)
+
+    def _create_checkpoint(self):
+        """helper method for creating checkpoint"""
+        checkpoint = VerificationCheckpoint(course_id=self.course_key, checkpoint_name=self.MIDTERM)
+        checkpoint.save()
+
+    def _create_initial_verification(self):
+        """helper method for initial verification"""
+        attempt = SoftwareSecurePhotoVerification(user=self.user)
+        attempt.mark_ready()
+        attempt.save()
+        attempt.submit()
+
+    def _get_url(self, course_key, checkpoint):
+        """contruct the url.
+
+       Arguments:
+            course_key (unicode): The ID of the course.
+            checkpoint (str): The verification checkpoint
+        Returns:
+            url
+
+        """
+        return reverse('verify_student_incourse_reverify',
+                       kwargs={
+                           "course_id": unicode(course_key),
+                           "checkpoint_name": checkpoint,
+                           "usage_id": unicode(self.reverification_location)
+                       })

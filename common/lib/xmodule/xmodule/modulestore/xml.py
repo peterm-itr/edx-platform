@@ -18,7 +18,10 @@ from contextlib import contextmanager
 from xmodule.error_module import ErrorDescriptor
 from xmodule.errortracker import make_error_tracker, exc_info_to_str
 from xmodule.mako_module import MakoDescriptorSystem
-from xmodule.x_module import XMLParsingSystem, policy_key, OpaqueKeyReader, AsideKeyGenerator
+from xmodule.x_module import (
+    XMLParsingSystem, policy_key,
+    OpaqueKeyReader, AsideKeyGenerator, DEPRECATION_VSCOMPAT_EVENT
+)
 from xmodule.modulestore.xml_exporter import DEFAULT_CONTENT_FIELDS
 from xmodule.modulestore import ModuleStoreEnum, ModuleStoreReadBase, LIBRARY_ROOT, COURSE_ROOT
 from xmodule.tabs import CourseTabList
@@ -27,12 +30,13 @@ from opaque_keys.edx.locator import CourseLocator, LibraryLocator
 
 from xblock.field_data import DictFieldData
 from xblock.runtime import DictKeyValueStore
+from xblock.fields import ScopeIds
 
+import dogstats_wrapper as dog_stats_api
 
 from .exceptions import ItemNotFoundError
 from .inheritance import compute_inherited_metadata, inheriting_field_data, InheritanceKeyValueStore
 
-from xblock.fields import ScopeIds
 
 edx_xml_parser = etree.XMLParser(dtd_validation=False, load_dtd=False,
                                  remove_comments=True, remove_blank_text=True)
@@ -46,15 +50,21 @@ log = logging.getLogger(__name__)
 # TODO (cpennington): Remove this once all fall 2012 courses have been imported
 # into the cms from xml
 def clean_out_mako_templating(xml_string):
+    orig_xml = xml_string
     xml_string = xml_string.replace('%include', 'include')
     xml_string = re.sub(r"(?m)^\s*%.*$", '', xml_string)
+    if orig_xml != xml_string:
+        dog_stats_api.increment(
+            DEPRECATION_VSCOMPAT_EVENT,
+            tags=["location:xml_clean_out_mako_templating"]
+        )
     return xml_string
 
 
 class ImportSystem(XMLParsingSystem, MakoDescriptorSystem):
     def __init__(self, xmlstore, course_id, course_dir,
                  error_tracker,
-                 load_error_modules=True, **kwargs):
+                 load_error_modules=True, target_course_id=None, **kwargs):
         """
         A class that handles loading from xml.  Does some munging to ensure that
         all elements have unique slugs.
@@ -114,6 +124,14 @@ class ImportSystem(XMLParsingSystem, MakoDescriptorSystem):
                 def fallback_name(orig_name=None):
                     """Return the fallback name for this module.  This is a function instead of a variable
                     because we want it to be lazy."""
+                    dog_stats_api.increment(
+                        DEPRECATION_VSCOMPAT_EVENT,
+                        tags=(
+                            "location:import_system_fallback_name",
+                            u"name:{}".format(orig_name),
+                        )
+                    )
+
                     if looks_like_fallback(orig_name):
                         # We're about to re-hash, in case something changed, so get rid of the tag_ and hash
                         orig_name = orig_name[len(tag) + 1:-12]
@@ -237,7 +255,7 @@ class ImportSystem(XMLParsingSystem, MakoDescriptorSystem):
 
         resources_fs = OSFS(xmlstore.data_dir / course_dir)
 
-        id_manager = CourseLocationManager(course_id)
+        id_manager = CourseImportLocationManager(course_id, target_course_id)
 
         super(ImportSystem, self).__init__(
             load_item=load_item,
@@ -288,6 +306,25 @@ class CourseLocationManager(OpaqueKeyReader, AsideKeyGenerator):
         return usage_id
 
 
+class CourseImportLocationManager(CourseLocationManager):
+    """
+    IdGenerator for Location-based definition ids and usage ids
+    based within a course, for use during course import.
+
+    In addition to the functionality provided by CourseLocationManager,
+    this class also contains the target_course_id for the course import
+    process.
+
+    Note: This is a temporary solution to workaround the fact that
+    the from_xml method is passed the source course_id instead of the
+    target course_id in the import process. For a more ideal solution,
+    see https://openedx.atlassian.net/browse/MA-417 as a pending TODO.
+    """
+    def __init__(self, course_id, target_course_id):
+        super(CourseImportLocationManager, self).__init__(course_id=course_id)
+        self.target_course_id = target_course_id
+
+
 class XMLModuleStore(ModuleStoreReadBase):
     """
     An XML backed ModuleStore
@@ -297,7 +334,7 @@ class XMLModuleStore(ModuleStoreReadBase):
     def __init__(
             self, data_dir, default_class=None, source_dirs=None, course_ids=None,
             load_error_modules=True, i18n_service=None, fs_service=None, user_service=None,
-            signal_handler=None, **kwargs   # pylint: disable=unused-argument
+            signal_handler=None, target_course_id=None, **kwargs   # pylint: disable=unused-argument
     ):
         """
         Initialize an XMLModuleStore from data_dir
@@ -347,9 +384,9 @@ class XMLModuleStore(ModuleStoreReadBase):
             source_dirs = sorted([d for d in os.listdir(self.data_dir) if
                                   os.path.exists(self.data_dir / d / self.parent_xml)])
         for course_dir in source_dirs:
-            self.try_load_course(course_dir, course_ids)
+            self.try_load_course(course_dir, course_ids, target_course_id)
 
-    def try_load_course(self, course_dir, course_ids=None):
+    def try_load_course(self, course_dir, course_ids=None, target_course_id=None):
         '''
         Load a course, keeping track of errors as we go along. If course_ids is not None,
         then reject the course unless its id is in course_ids.
@@ -361,7 +398,7 @@ class XMLModuleStore(ModuleStoreReadBase):
         errorlog = make_error_tracker()
         course_descriptor = None
         try:
-            course_descriptor = self.load_course(course_dir, course_ids, errorlog.tracker)
+            course_descriptor = self.load_course(course_dir, course_ids, errorlog.tracker, target_course_id)
         except Exception as exc:  # pylint: disable=broad-except
             msg = "ERROR: Failed to load courselike '{0}': {1}".format(
                 course_dir.encode("utf-8"), unicode(exc)
@@ -414,7 +451,7 @@ class XMLModuleStore(ModuleStoreReadBase):
             log.warning(msg + " " + str(err))
         return {}
 
-    def load_course(self, course_dir, course_ids, tracker):
+    def load_course(self, course_dir, course_ids, tracker, target_course_id=None):
         """
         Load a course into this module store
         course_path: Course directory name
@@ -468,12 +505,32 @@ class XMLModuleStore(ModuleStoreReadBase):
 
                 # VS[compat]: remove once courses use the policy dirs.
                 if policy == {}:
+
+                    dog_stats_api.increment(
+                        DEPRECATION_VSCOMPAT_EVENT,
+                        tags=(
+                            "location:xml_load_course_policy_dir",
+                            u"course:{}".format(course),
+                        )
+                    )
+
                     old_policy_path = self.data_dir / course_dir / 'policies' / '{0}.json'.format(url_name)
                     policy = self.load_policy(old_policy_path, tracker)
             else:
                 policy = {}
                 # VS[compat] : 'name' is deprecated, but support it for now...
                 if course_data.get('name'):
+
+                    dog_stats_api.increment(
+                        DEPRECATION_VSCOMPAT_EVENT,
+                        tags=(
+                            "location:xml_load_course_course_data_name",
+                            u"course:{}".format(course_data.get('course')),
+                            u"org:{}".format(course_data.get('org')),
+                            u"name:{}".format(course_data.get('name')),
+                        )
+                    )
+
                     url_name = Location.clean(course_data.get('name'))
                     tracker("'name' is deprecated for module xml.  Please use "
                             "display_name and url_name.")
@@ -513,6 +570,7 @@ class XMLModuleStore(ModuleStoreReadBase):
                 select=self.xblock_select,
                 field_data=self.field_data,
                 services=services,
+                target_course_id=target_course_id,
             )
             course_descriptor = system.process_xml(etree.tostring(course_data, encoding='unicode'))
             # If we fail to load the course, then skip the rest of the loading steps
@@ -660,6 +718,14 @@ class XMLModuleStore(ModuleStoreReadBase):
                         # Hack because we need to pull in the 'display_name' for static tabs (because we need to edit them)
                         # from the course policy
                         if category == "static_tab":
+                            dog_stats_api.increment(
+                                DEPRECATION_VSCOMPAT_EVENT,
+                                tags=(
+                                    "location:xml_load_extra_content_static_tab",
+                                    u"course_dir:{}".format(course_dir),
+                                )
+                            )
+
                             tab = CourseTabList.get_tab_by_slug(tab_list=course_descriptor.tabs, url_slug=slug)
                             if tab:
                                 module.display_name = tab.name

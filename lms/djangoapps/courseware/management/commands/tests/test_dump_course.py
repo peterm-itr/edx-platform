@@ -44,6 +44,7 @@ class CommandsTestBase(ModuleStoreTestCase):
 
     """
     __test__ = False
+    url_name = '2012_Fall'
 
     def setUp(self):
         super(CommandsTestBase, self).setUp()
@@ -126,9 +127,12 @@ class CommandsTestBase(ModuleStoreTestCase):
         self.assertEqual(dump[child_id]['category'], 'videosequence')
         self.assertEqual(len(dump[child_id]['children']), 2)
 
-        video_id = test_course_key.make_usage_key('video', 'Welcome').to_deprecated_string()
+        video_id = unicode(test_course_key.make_usage_key('video', 'Welcome'))
         self.assertEqual(dump[video_id]['category'], 'video')
-        self.assertEqual(len(dump[video_id]['metadata']), 5)
+        self.assertItemsEqual(
+            dump[video_id]['metadata'].keys(),
+            ['download_video', 'youtube_id_0_75', 'youtube_id_1_0', 'youtube_id_1_25', 'youtube_id_1_5']
+        )
         self.assertIn('youtube_id_1_0', dump[video_id]['metadata'])
 
         # Check if there are the right number of elements
@@ -198,7 +202,7 @@ class CommandsTestBase(ModuleStoreTestCase):
 
         assert_in = self.assertIn
         assert_in('edX-simple-2012_Fall', names)
-        assert_in('edX-simple-2012_Fall/policies/2012_Fall/policy.json', names)
+        assert_in('edX-simple-2012_Fall/policies/{}/policy.json'.format(self.url_name), names)
         assert_in('edX-simple-2012_Fall/html/toylab.html', names)
         assert_in('edX-simple-2012_Fall/videosequence/A_simple_sequence.xml', names)
         assert_in('edX-simple-2012_Fall/sequential/Lecture_2.xml', names)
@@ -229,3 +233,4 @@ class CommandSplitMongoTestCase(CommandsTestBase):
     """
     MODULESTORE = TEST_DATA_SPLIT_MODULESTORE
     __test__ = True
+    url_name = 'course'

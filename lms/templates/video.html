@@ -154,21 +154,22 @@
 </div>
 % if cdn_eval:
 <script>
-  function sendMetricToGraphite(metricName, value) {
-    var url = "${cdn_eval_endpoint}";
-    var request = new XMLHttpRequest();
-    request.open("POST", url, true);  // send asynchronously
-    request.send(metricName + " " + value);
-  };
-  var cdnStartTime, beaconSent = false;
+  function sendPerformanceBeacon(id, expgroup, value, event_name) {
+    var data = {event: event_name, id: id, expgroup: expgroup, value: value, page: "html5vid"};
+    $.ajax({method: "POST", url: "/performance", data: data});
+  }
+  var cdnStartTime;
+  var salt = Math.floor((1 + Math.random()) * 0x100000).toString(36);
   function initializeCDNExperiment() {
+    sendPerformanceBeacon("${id}_" + salt, ${cdn_exp_group}, "", "load");
     cdnStartTime = Date.now();
-    $("#video_${id}").bind("html5:canplaythrough", null, function() {
-      if (!beaconSent) {
+    $.each(['loadstart', 'abort', 'error', 'stalled', 'loadedmetadata',
+                    'loadeddata', 'canplay', 'canplaythrough', 'seeked'],
+                    function(index, eventName) {
+      $("#video_${id}").bind("html5:" + eventName, null, function() {
         timeElapsed = Date.now() - cdnStartTime;
-        sendMetricToGraphite("videocdnexp.${id}.${cdn_exp_group}.loadtime", timeElapsed);
-      }
-      beaconSent = true;
+        sendPerformanceBeacon("${id}_" + salt, ${cdn_exp_group}, timeElapsed, eventName);
+      });
     });
   }
   $("#video_${id}").bind("initialize", null, initializeCDNExperiment);

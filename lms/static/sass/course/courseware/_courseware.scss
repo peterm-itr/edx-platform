@@ -60,6 +60,12 @@ div.course-wrapper {
       }
     }
 
+    .sr-is-focusable,
+    .sr-is-focusable:focus,
+    .sr-is-focusable:active {
+      outline: none;
+    }
+
     .sequential-status-message {
       margin-bottom: $baseline;
       background-color: $gray-l5;
@@ -162,7 +168,7 @@ div.course-wrapper {
       }
     }
 
-    section.xmodule_WrapperModule div.vert-mod > div {
+    section.xblock-student_view-wrapper div.vert-mod > div {
       border-bottom: none;
     }
 

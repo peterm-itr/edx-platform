@@ -3,14 +3,11 @@ import decimal
 import ddt
 from mock import patch
 from django.conf import settings
-from django.test.utils import override_settings
 from django.core.urlresolvers import reverse
 from pytz import timezone
 from datetime import datetime
 
-from xmodule.modulestore.tests.django_utils import (
-    ModuleStoreTestCase, mixed_store_config
-)
+from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 
 from util.date_utils import get_time_display
 from util.testing import UrlResetMixin
@@ -133,6 +130,26 @@ class CourseModeViewTest(UrlResetMixin, ModuleStoreTestCase):
         self.assertEquals(response.status_code, 200)
         # TODO: Fix it so that response.templates works w/ mako templates, and then assert
         # that the right template rendered
+
+    @ddt.data(
+        (['honor', 'verified', 'credit'], True),
+        (['honor', 'verified'], False),
+    )
+    @ddt.unpack
+    def test_credit_upsell_message(self, available_modes, show_upsell):
+        # Create the course modes
+        for mode in available_modes:
+            CourseModeFactory(mode_slug=mode, course_id=self.course.id)
+
+        # Check whether credit upsell is shown on the page
+        # This should *only* be shown when a credit mode is available
+        url = reverse('course_modes_choose', args=[unicode(self.course.id)])
+        response = self.client.get(url)
+
+        if show_upsell:
+            self.assertContains(response, "Credit")
+        else:
+            self.assertNotContains(response, "Credit")
 
     @ddt.data('professional', 'no-id-professional')
     def test_professional_enrollment(self, mode):
