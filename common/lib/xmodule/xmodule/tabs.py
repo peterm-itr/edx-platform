@@ -911,13 +911,13 @@ class CourseTabList(List):
         if len(tabs) < 2:
             raise InvalidTabsException("Expected at least two tabs.  tabs: '{0}'".format(tabs))
 
-        if tabs[0].get('type') != CoursewareTab.type:
-            raise InvalidTabsException(
-                "Expected first tab to have type 'courseware'.  tabs: '{0}'".format(tabs))
-
-        if tabs[1].get('type') != CourseInfoTab.type:
-            raise InvalidTabsException(
-                "Expected second tab to have type 'course_info'.  tabs: '{0}'".format(tabs))
+        # if tabs[0].get('type') != CoursewareTab.type:
+        #     raise InvalidTabsException(
+        #         "Expected first tab to have type 'courseware'.  tabs: '{0}'".format(tabs))
+        #
+        # if tabs[1].get('type') != CourseInfoTab.type:
+        #     raise InvalidTabsException(
+        #         "Expected second tab to have type 'course_info'.  tabs: '{0}'".format(tabs))
 
         # the following tabs should appear only once
         for tab_type in [
