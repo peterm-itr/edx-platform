@@ -37,6 +37,7 @@ from shoppingcart.models import Coupon, PaidCourseRegistration
 from course_modes.models import CourseMode, CourseModesArchive
 from student.roles import CourseFinanceAdminRole, CourseSalesAdminRole
 from certificates.models import CertificateGenerationConfiguration
+from courseware.models import CoursePreference
 from certificates import api as certs_api
 
 from class_dashboard.dashboard_data import get_section_display_name, get_array_section_has_problem
@@ -388,6 +389,8 @@ def _section_student_admin(course, access):
         'list_entrace_exam_instructor_tasks_url': reverse('list_entrance_exam_instructor_tasks',
                                                           kwargs={'course_id': unicode(course_key)}),
         'spoc_gradebook_url': reverse('spoc_gradebook', kwargs={'course_id': unicode(course_key)}),
+        'course_access_expiration_after': CoursePreference.course_access_expiration_after(course_key),
+        'course_access_expiration_set_url': reverse('set_access_expiration', kwargs={'course_id': unicode(course_key)}),
     }
     return section_data
 

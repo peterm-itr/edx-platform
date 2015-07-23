@@ -248,3 +248,38 @@ class StudentFieldOverride(TimeStampedModel):
 
     field = models.CharField(max_length=255)
     value = models.TextField(default='null')
+
+
+class CoursePreference(models.Model):
+    course_id = models.CharField(max_length=255, db_index=True)
+    pref_key = models.CharField(max_length=255)
+    pref_value = models.CharField(max_length=255, null=True)
+
+    class Meta:
+        unique_together = (('course_id', 'pref_key'))
+
+    @classmethod
+    def get_pref_value(cls, course_id, pref_key):
+        try:
+            return cls.objects.get(course_id=course_id, pref_key=pref_key).pref_value
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
+    def set_pref_value(cls, course_id, pref_key, pref_value):
+        pref = cls.objects.get_or_create(course_id=course_id, pref_key=pref_key)[0]
+        pref.pref_value = pref_value
+        pref.save()
+        return pref.pref_value
+
+    @classmethod
+    def course_access_expiration_after(cls, course_id):
+        result = cls.get_pref_value(course_id, 'course_access_expiration_after')
+        if result is not None:
+            return int(cls.get_pref_value(course_id, 'course_access_expiration_after'))
+        else:
+            return settings.DEFAULT_COURSE_ACCESS_EXPIRATION_AFTER
+
+    @classmethod
+    def set_course_access_expiration_after(cls, course_id, value):
+        return cls.set_pref_value(course_id, 'course_access_expiration_after', value)

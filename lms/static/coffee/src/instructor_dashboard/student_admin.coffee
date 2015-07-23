@@ -56,6 +56,8 @@ class @StudentAdmin
     @$btn_rescore_problem_all     = @$section.find "input[name='rescore-problem-all']"
     @$btn_task_history_all        = @$section.find "input[name='task-history-all']"
     @$table_task_history_all      = @$section.find ".task-history-all-table"
+    @$access_expiration_input     = @$section.find "input.access-expiration-input"
+    @$access_expiration_button    = @$section.find "input.access-expiration-button"
     @instructor_tasks             = new (PendingInstructorTasks()) @$section
 
     # response areas
@@ -65,6 +67,16 @@ class @StudentAdmin
     @$request_response_error_all    = @$section.find ".course-specific-container .request-response-error"
 
     # attach click handlers
+    @$access_expiration_button.click =>
+      newValue = @$access_expiration_input.val()
+      @$access_expiration_input.val('')
+      $.ajax
+        dataType: 'json'
+        type: 'POST'
+        url: @$access_expiration_button.data 'endpoint'
+        data: access_expiration: newValue
+        success: (data) =>
+          @$access_expiration_input.val(data.course_access_expiration_after)
 
     # go to student progress page
     @$progress_link.click (e) =>

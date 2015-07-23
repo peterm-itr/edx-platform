@@ -2,6 +2,19 @@
 <%page args="section_data"/>
 
 <div>
+  <h2>Настройки доступа к курсу</h2>
+  <p>
+    Вы можете указать промежуток времени (в днях), через который слушатели курса перестанут иметь к нему доступ:
+    <br />
+    <input type="text" placeholder="Пожалуйста, подождите..." class="access-expiration-input" value="${ section_data['course_access_expiration_after'] }" >
+    <p>
+      <input type="button" value="Сохранить изменения" class="access-expiration-button" data-endpoint="${ section_data['course_access_expiration_set_url'] }" >
+    </p>
+  </p>
+  <hr>
+</div>
+
+<div>
   %if section_data['is_small_course']:
   ## Show the gradebook for small courses
     <h2>${_("Student Gradebook")}</h2>
