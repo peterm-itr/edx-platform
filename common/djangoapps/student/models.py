@@ -51,6 +51,7 @@ from functools import total_ordering
 
 from certificates.models import GeneratedCertificate
 from course_modes.models import CourseMode
+from courseware.models import CoursePreference
 from company.models import Company
 
 import analytics
@@ -1136,11 +1137,24 @@ class CourseEnrollment(models.Model):
 
         `course_id` is our usual course_id string (e.g. "edX/Test101/2013_Fall)
         """
+        CourseEnrollment.remove_outdated(user)
         try:
             record = CourseEnrollment.objects.get(user=user, course_id=course_key)
             return record.is_active
         except cls.DoesNotExist:
             return False
+
+    @classmethod
+    def remove_outdated(cls, user):
+        if user.is_staff or user.is_superuser:
+            return
+        user_enrollments_set = CourseEnrollment.objects.filter(user=user)
+        for user_enrollment in user_enrollments_set:
+            course_access_expiration = CoursePreference.course_access_expiration_after(user_enrollment.course_id)
+            course_access_expiration_date = user_enrollment.created + timedelta(days=course_access_expiration)
+            is_expired = course_access_expiration_date < timezone.now()
+            if is_expired:
+                user_enrollment.delete()
 
     @classmethod
     def is_enrolled_by_partial(cls, user, course_id_partial):
@@ -1190,6 +1204,7 @@ class CourseEnrollment(models.Model):
 
     @classmethod
     def enrollments_for_user(cls, user):
+        CourseEnrollment.remove_outdated(user)
         return CourseEnrollment.objects.filter(user=user, is_active=1)
 
     @classmethod
