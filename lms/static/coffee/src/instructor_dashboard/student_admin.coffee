@@ -58,6 +58,7 @@ class @StudentAdmin
     @$table_task_history_all      = @$section.find ".task-history-all-table"
     @$access_expiration_input     = @$section.find "input.access-expiration-input"
     @$access_expiration_button    = @$section.find "input.access-expiration-button"
+    @$refresh_enrollment_button   = @$section.find "button.refresh-enrollment"
     @instructor_tasks             = new (PendingInstructorTasks()) @$section
 
     # response areas
@@ -77,6 +78,18 @@ class @StudentAdmin
         data: access_expiration: newValue
         success: (data) =>
           @$access_expiration_input.val(data.course_access_expiration_after)
+
+    @$refresh_enrollment_button.click (evt) =>
+      button = $(evt.target)
+      enrollment_id = button.data('enrollment-id')
+      url = button.data('url')
+      $.ajax
+        dataType: 'json'
+        type: 'POST'
+        url: url
+        data: enrollment_id: enrollment_id
+        success: (data) =>
+          $("#enrollment_#{enrollment_id} td.expired").html(data.expired)
 
     # go to student progress page
     @$progress_link.click (e) =>

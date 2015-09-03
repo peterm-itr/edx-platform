@@ -15,6 +15,34 @@
 </div>
 
 <div>
+  <h2>Список студентов:</h2>
+  <table class="enrollments-table">
+    <tr>
+      <th>
+        Логин
+      </th>
+      <th>
+        Дата истечения доступа
+      </th>
+      <th>
+        Действия
+      </th>
+    </tr>
+    % for enrollment in section_data['enrollment_data']:
+      <tr id="enrollment_${enrollment['id']}">
+        <td class="username">${enrollment['username']}</td>
+        <td class="expired">${enrollment['expired']}</td>
+        <td class="refresh-button">
+          <button class="refresh-enrollment" data-enrollment-id="${enrollment['id']}"
+                  data-url="${section_data['enrollment_expiration_refresh_url']}">Продлить</button>
+        </td>
+      </tr>
+    % endfor
+  </table>
+  <hr>
+</div>
+
+<div>
   %if section_data['is_small_course']:
   ## Show the gradebook for small courses
     <h2>${_("Student Gradebook")}</h2>

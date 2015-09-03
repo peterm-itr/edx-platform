@@ -367,6 +367,13 @@ def _section_student_admin(course, access):
     course_key = course.id
     is_small_course = _is_small_course(course_key)
 
+    course_expiration_after = CoursePreference.course_access_expiration_after(course_key)
+    enrollment_data = []
+    for enrollment in CourseEnrollment.objects.filter(course_id=course_key).prefetch_related('user'):
+        if not (enrollment.user.is_staff or enrollment.user.is_superuser):
+            expired_at = (enrollment.created + datetime.timedelta(days=course_expiration_after)).strftime("%d.%m.%Y")
+            enrollment_data.append({'id': enrollment.id ,'username': enrollment.user.username, 'expired': expired_at})
+
     section_data = {
         'section_key': 'student_admin',
         'section_display_name': _('Student Admin'),
@@ -389,8 +396,10 @@ def _section_student_admin(course, access):
         'list_entrace_exam_instructor_tasks_url': reverse('list_entrance_exam_instructor_tasks',
                                                           kwargs={'course_id': unicode(course_key)}),
         'spoc_gradebook_url': reverse('spoc_gradebook', kwargs={'course_id': unicode(course_key)}),
-        'course_access_expiration_after': CoursePreference.course_access_expiration_after(course_key),
+        'course_access_expiration_after': course_expiration_after,
         'course_access_expiration_set_url': reverse('set_access_expiration', kwargs={'course_id': unicode(course_key)}),
+        'enrollment_expiration_refresh_url': reverse('refresh_enrollment', kwargs={'course_id': unicode(course_key)}),
+        'enrollment_data': enrollment_data,
     }
     return section_data
 
