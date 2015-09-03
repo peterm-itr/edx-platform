@@ -345,8 +345,10 @@ if settings.COURSEWARE_ENABLED:
         url(r'^courses/{}/instructor$'.format(settings.COURSE_ID_PATTERN),
             'instructor.views.instructor_dashboard.instructor_dashboard_2', name="instructor_dashboard"),
 
-        url(r'^courses/{}/set_access_expiration'.format(settings.COURSE_ID_PATTERN),
+        url(r'^courses/{}/set_access_expiration$'.format(settings.COURSE_ID_PATTERN),
             'instructor.views.course_preferences.set_access_expiration', name="set_access_expiration"),
+        url(r'^courses/{}/refresh_enrollment$'.format(settings.COURSE_ID_PATTERN),
+            'instructor.views.course_preferences.refresh_enrollment', name="refresh_enrollment"),
         url(r'^courses/{}/set_course_mode_price$'.format(settings.COURSE_ID_PATTERN),
             'instructor.views.instructor_dashboard.set_course_mode_price', name="set_course_mode_price"),
         url(r'^courses/{}/instructor/api/'.format(settings.COURSE_ID_PATTERN),

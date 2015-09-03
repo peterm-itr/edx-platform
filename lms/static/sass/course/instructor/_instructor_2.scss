@@ -17,6 +17,17 @@
 .instructor-dashboard-wrapper-2 {
   position: relative;
 
+  table.enrollments-table {
+    th, td {
+      border: 1px solid black;
+      padding: 5px 10px;
+    }
+
+    td {
+      vertical-align: middle;
+    }
+  }
+
   .olddash-button-wrapper {
     position: absolute;
     top: 16px;
